@@ -2,6 +2,8 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <map>
+#include <deque>
 
 using namespace std;
 
@@ -29,34 +31,104 @@ vector<int> add(vector<int> a, vector<int> b)
     return res;
 }
 
-bool can(vector<int> a, vector<int> b)
+bool can(vector<int> inv, vector<int> spell)
 {
+    // 1. Enough ingredients 
     for (int i =0; i<4; i++){
-        if (a[i] + b[i] < 0){
+        if (inv[i] + spell[i] < 0){
             return false;
         }
     }
-    return true;
-}
-
-int minimum(vector<int> a){
-    int m = a[0];
-    for (int i=1; i<a.size(); i++){
-        if (a[i] < m){
-            m = a[i];
-        }
+    // 2. Enough space
+    int total = 0;
+    for (int i=0; i<4; i++) {
+        total += inv[i] + spell[i];
     }
-    return m;
+    return total <= 10;
 }
 
-bool increasesMinimum(vector<int> inv, vector<int> cast){
-    int m = minimum(inv);
+bool increasesMinimum(vector<int> inv, vector<int> cast)
+{
+    int m = *min_element(inv.begin(), inv.end());
     for (int i=1; i<cast.size(); i++){
         if ((cast[i] > 0) && (inv[i] != m)){
             return false;
         }
     }
     return true;
+}
+
+
+struct Witch
+{
+    vector<int> inv;
+    vector<int> castId;
+    vector<bool> castable;
+
+    bool operator==(const Witch &w) const{
+        return inv==w.inv && castId==w.castId && castable==w.castable;
+    }
+
+    bool operator<(const Witch &w) const{
+        return inv<w.inv 
+            || (inv==w.inv && castId<w.castId) 
+            || (inv==w.inv && castId==w.castId && castable<w.castable);
+    }
+
+    bool operator!=(const Witch &w) const{
+        return !(inv==w.inv && castId==w.castId && castable==w.castable);
+    }
+};
+
+Witch witchCast(Witch w, Cast c)
+{
+    auto result = w;
+    result.inv = add(w.inv, c.delta);
+    result.castable[c.actionId] = false; // store by actionId
+    return result;
+}
+
+vector<Witch> bfs(Witch startWitch, vector<Cast> casts, vector<Brew> brews)
+{
+    vector<Witch> result;
+    map<Witch, Witch> prev;
+    prev.insert(make_pair(startWitch, startWitch));
+    deque<Witch> queue;
+    queue.push_back(startWitch);
+    while (!queue.empty() > 0){
+        Witch currentWitch = queue[0];
+        queue.pop_front();
+
+        for (int i=0; i<brews.size(); i++){
+            auto brew = brews[i];
+            if (can(currentWitch.inv, brew.delta)){
+                while (currentWitch != startWitch){
+                    result.push_back(currentWitch);
+                    auto it = prev.find(currentWitch);
+                    if (it == prev.end()){
+                        throw runtime_error("key in prev not found");
+                    }
+                    currentWitch = it->second;
+                }
+                result.push_back(startWitch); // len = turns + 1
+                return result;
+            }
+        }
+
+        for (int i=0; i<casts.size(); i++){
+            auto cast = casts[i];
+            if (!currentWitch.castable[cast.actionId]){ // store by actionId
+                continue;
+            }
+            if (!can(currentWitch.inv, cast.delta)){
+                continue;
+            }
+            auto newWitch = witchCast(currentWitch, cast);
+            queue.push_back(newWitch);
+            prev.insert(make_pair(newWitch, currentWitch));
+        }
+    }
+    return result; // not fount -> empty
 }
 
 int main()
@@ -130,18 +202,14 @@ int main()
             if (!casts[i].castable) {
                 continue;
             }
-            bool canCast = can(inv, casts[i].delta);
-            int total = 0;
-            for (int j=0; j<4; j++) {
-                total += inv[j] + casts[i].delta[j];
+            if (!can(inv, casts[i].delta)){
+                continue;
             }
             if (!increasesMinimum(inv, casts[i].delta)){
                 continue;
             }
-            if (canCast and total<=10) {
-                castId = casts[i].actionId;
-                break;
-            }
+            castId = casts[i].actionId;
+            break;
         }
         if (castId > -1) {
             cout << "CAST " << castId << endl;
