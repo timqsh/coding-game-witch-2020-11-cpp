@@ -1,3 +1,4 @@
+// #pragma GCC optimize "O3,omit-frame-pointer,inline"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -118,7 +119,7 @@ Witch witchRest(Witch w)
     return result;
 }
 
-vector<string> bfs(Witch startWitch, vector<Brew> brews, time_t timeStart)
+vector<string> bfs(Witch startWitch, vector<Brew> brews, time_t timeStart, bool timeControl = true)
 {
     vector<string> result;
     map<Witch, Witch> prev;
@@ -129,7 +130,7 @@ vector<string> bfs(Witch startWitch, vector<Brew> brews, time_t timeStart)
     queue.push_back(startWitch);
     int iterations = 0;
     while (!queue.empty() > 0){
-        if (difftime(clock(), timeStart) > 40000){
+        if (timeControl and (difftime(clock(), timeStart) > 40000)){
             break;
         }
         iterations++;
@@ -327,7 +328,7 @@ void test()
         }
     };
     vector<Brew> brews = {{777, {0,0,0,-4}, 100500}};
-    auto result = bfs(startWitch, brews, clock());
+    auto result = bfs(startWitch, brews, clock(), false);
     printWithes(result);
 }
 
