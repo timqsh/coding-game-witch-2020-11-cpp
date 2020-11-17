@@ -1,9 +1,11 @@
 (done) Simple bfs with big structure in dict
 
+get input from game (cin->cerr) -> python sctipt -> debug with "< input.txt"
 profile bfs
 optimise bfs
 
 (done) multicast in bfs
-learn in bfs
+(done) learn in bfs
+don't stop bfs -> return all paths -> choose by price
 
 smart learn (profit estimate, blue generation)

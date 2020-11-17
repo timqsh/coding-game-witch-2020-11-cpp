@@ -41,6 +41,7 @@ struct Learn
     vector<int> delta;
     int tomeIndex;
     int taxCount;
+    bool repeatable;
 };
 
 vector<int> add(vector<int> a, vector<int> b)
@@ -120,7 +121,27 @@ Witch witchRest(Witch w)
     return result;
 }
 
-vector<string> bfs(Witch startWitch, vector<Brew> brews, time_t timeStart, bool timeControl = true)
+Witch witchLearn(Witch w, Learn l)
+{
+    auto result = w;
+
+    Cast newCast = {777, l.delta, true, l.repeatable};
+    result.casts.push_back(newCast);
+
+    w.inv[0] -= l.tomeIndex;
+    auto freeSlots = 10 - w.inv[0]-w.inv[1]-w.inv[2]-w.inv[3];
+    w.inv[0] += min(l.taxCount, freeSlots);
+
+    return result;
+}
+
+bool witchCanLearn(Witch w, Learn l)
+{
+    auto blues = w.inv[0];
+    return blues >= l.tomeIndex;
+}
+
+vector<string> bfs(Witch startWitch, vector<Brew> brews, vector<Learn> learns, time_t timeStart, bool timeControl = true)
 {
     vector<string> result;
     map<Witch, Witch> prev;
@@ -151,6 +172,20 @@ vector<string> bfs(Witch startWitch, vector<Brew> brews, time_t timeStart, bool 
                 }
                 result.push_back("Start"); // len = turns + 1
                 return result;
+            }
+        }
+
+        if (iterations==1){
+            for(auto learn:learns){
+                if (witchCanLearn(currentWitch, learn)){
+                    auto newWitch = witchLearn(currentWitch, learn);
+                    if (prev.find(newWitch) == prev.end()){
+                        queue.push_back(newWitch);
+                        prev.insert(make_pair(newWitch, currentWitch));
+                        actions.insert(make_pair(newWitch, 
+                            "LEARN " + to_string(learn.actionId) + " +LEARNING!"));
+                    }
+                }
             }
         }
 
@@ -229,7 +264,8 @@ void prod()
                 struct Brew brew = {actionId, vector<int>{delta0, delta1, delta2, delta3}, price};
                 brews.push_back(brew);
             } else if (actionType == "LEARN") {
-                struct Learn learn = {actionId, vector<int>{delta0, delta1, delta2, delta3}, tomeIndex, taxCount};
+                struct Learn learn = {actionId, vector<int>{delta0, delta1, delta2, delta3}, 
+                    tomeIndex, taxCount, repeatable};
                 learns.push_back(learn);
             }
         }
@@ -257,7 +293,7 @@ void prod()
                     first_tome = elem;
                 }
             }
-            cout << "LEARN " << first_tome.actionId << endl;
+            cout << "LEARN " << first_tome.actionId << " start learning" << endl;
             continue;
         }
 
@@ -279,7 +315,7 @@ void prod()
         Witch myWitch;
         myWitch.inv = inv;
         myWitch.casts = casts;
-        auto result = bfs(myWitch, brews, start);
+        auto result = bfs(myWitch, brews, learns, start);
         auto end = clock();
         auto elapsed = difftime(end, start);
         if (result.size()>0){
@@ -309,12 +345,12 @@ void prod()
             break;
         }
         if (castId > -1) {
-            cout << "CAST " << castId << endl;
+            cout << "CAST " << castId << " 1 increase minimum" << endl;
             continue;
         }
 
         // 4. Rest
-        cout << "REST" << endl;
+        cout << "REST just rest" << endl;
 
         // in the first league: BREW <id> | WAIT; later: BREW <id> | CAST <id> [<times>] | LEARN <id> | REST | WAIT
         // cout << "CAST " << casts[0].actionId << endl;
@@ -341,7 +377,8 @@ void test()
         }
     };
     vector<Brew> brews = {{777, {0,0,0,-4}, 100500}};
-    auto result = bfs(startWitch, brews, clock(), false);
+    vector<Learn> learns = {};
+    auto result = bfs(startWitch, brews, learns, clock(), false);
     printWithes(result);
 }
 
