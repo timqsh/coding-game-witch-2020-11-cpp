@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <map>
 #include <deque>
+#include <time.h>
+#include <iomanip>
 
 using namespace std;
 
@@ -20,6 +22,15 @@ struct Cast
     int actionId;
     vector<int> delta;
     bool castable;
+
+    bool operator==(const Cast &c) const{
+        return actionId==c.actionId && castable==c.castable;
+    }
+
+    bool operator<(const Cast &c) const{
+        return actionId<c.actionId
+            || (actionId==c.actionId && castable<c.castable);
+    }
 };
 
 vector<int> add(vector<int> a, vector<int> b)
@@ -62,21 +73,19 @@ bool increasesMinimum(vector<int> inv, vector<int> cast)
 struct Witch
 {
     vector<int> inv;
-    vector<int> castId;
-    vector<bool> castable;
+    vector<Cast> casts;
 
     bool operator==(const Witch &w) const{
-        return inv==w.inv && castId==w.castId && castable==w.castable;
+        return inv==w.inv && casts==w.casts;
     }
 
     bool operator<(const Witch &w) const{
         return inv<w.inv 
-            || (inv==w.inv && castId<w.castId) 
-            || (inv==w.inv && castId==w.castId && castable<w.castable);
+            || (inv==w.inv && casts<w.casts);
     }
 
     bool operator!=(const Witch &w) const{
-        return !(inv==w.inv && castId==w.castId && castable==w.castable);
+        return not (*this==w);
     }
 };
 
@@ -84,18 +93,35 @@ Witch witchCast(Witch w, Cast c)
 {
     auto result = w;
     result.inv = add(w.inv, c.delta);
-    result.castable[c.actionId] = false; // store by actionId
+    for(int i=0; i<result.casts.size(); i++){
+        if (result.casts[i].actionId == c.actionId){
+            result.casts[i].castable = false;
+        }
+    }
     return result;
 }
 
-vector<Witch> bfs(Witch startWitch, vector<Cast> casts, vector<Brew> brews)
+Witch witchRest(Witch w)
 {
-    vector<Witch> result;
+    auto result = w;
+    for(int i=0; i<result.casts.size(); i++){
+        result.casts[i].castable = true;
+    }
+    return result;
+}
+
+vector<string> bfs(Witch startWitch, vector<Brew> brews)
+{
+    vector<string> result;
     map<Witch, Witch> prev;
     prev.insert(make_pair(startWitch, startWitch));
+    map<Witch, string> actions;
+    actions.insert(make_pair(startWitch, "Start"));
     deque<Witch> queue;
     queue.push_back(startWitch);
+    int iterations = 0;
     while (!queue.empty() > 0){
+        iterations++;
         Witch currentWitch = queue[0];
         queue.pop_front();
 
@@ -103,35 +129,43 @@ vector<Witch> bfs(Witch startWitch, vector<Cast> casts, vector<Brew> brews)
             auto brew = brews[i];
             if (can(currentWitch.inv, brew.delta)){
                 while (currentWitch != startWitch){
-                    result.push_back(currentWitch);
+                    result.push_back(actions[currentWitch]+" nodes:"+to_string(prev.size()));
                     auto it = prev.find(currentWitch);
                     if (it == prev.end()){
                         throw runtime_error("key in prev not found");
                     }
                     currentWitch = it->second;
                 }
-                result.push_back(startWitch); // len = turns + 1
+                result.push_back("Start"); // len = turns + 1
                 return result;
             }
         }
 
-        for (int i=0; i<casts.size(); i++){
-            auto cast = casts[i];
-            if (!currentWitch.castable[cast.actionId]){ // store by actionId
+        for (auto cast : currentWitch.casts){
+            if (not cast.castable){
                 continue;
             }
-            if (!can(currentWitch.inv, cast.delta)){
+            if (not can(currentWitch.inv, cast.delta)){
                 continue;
             }
             auto newWitch = witchCast(currentWitch, cast);
             queue.push_back(newWitch);
             prev.insert(make_pair(newWitch, currentWitch));
+            actions.insert(make_pair(newWitch, "CAST " + to_string(cast.actionId) + " 1 "));
+        }
+
+        auto newWitch = witchRest(currentWitch);
+        if (prev.find(newWitch) == prev.end()){
+            queue.push_back(newWitch);
+            prev.insert(make_pair(newWitch, currentWitch));
+            actions.insert(make_pair(newWitch, "REST "));
         }
     }
     return result; // not fount -> empty
 }
 
-int main()
+
+void prod()
 {
 
     // game loop
@@ -183,6 +217,9 @@ int main()
             }
         }
 
+        auto start = clock();
+
+        // 1. Can brew.
         int brewId = -1;
         for (int i = 0; i < brews.size(); i++) {
             bool canBrew = can(inv, brews[i].delta);
@@ -196,6 +233,25 @@ int main()
             continue;
         }
 
+        // 2. BFS
+        Witch myWitch;
+        myWitch.inv = inv;
+        myWitch.casts = casts;
+        auto result = bfs(myWitch, brews);
+        auto end = clock();
+        auto elapsed = difftime(end, start);
+        if (result.size()>0){
+            if (result.size()==1){
+                throw runtime_error("Bfs returned path with len=1, shoed have brewed before...");
+            }
+            auto firstMove = result[result.size()-2];
+            cout << firstMove << " T-" + to_string(result.size()) 
+                + " " << setprecision(2) << elapsed/1000;
+            cout << endl;
+            continue;
+        }
+
+        // 3. Cast increases minimum
         int castId = -1;
         for (int i = 0; i < casts.size(); i++) {
             cerr << casts[i].castable << " " << casts[i].actionId << endl;
@@ -216,10 +272,40 @@ int main()
             continue;
         }
 
+        // 4. Rest
         cout << "REST" << endl;
 
         // in the first league: BREW <id> | WAIT; later: BREW <id> | CAST <id> [<times>] | LEARN <id> | REST | WAIT
         // cout << "CAST " << casts[0].actionId << endl;
         // cout << "BREW " << priciestBrewActionId << endl;
     }
+}
+
+void printWithes(vector<string> actions)
+{
+    for(auto a:actions){
+        cout << a << endl;
+    }
+}
+
+void test()
+{
+    Witch startWitch = {
+        {3,0,0,0}, 
+        {
+            {111,{2,0,0,0}, true},
+            {222,{-1,1,0,0}, true},
+            {333,{0,-1,1,0}, true},
+            {444,{0,0,-1,1}, true}
+        }
+    };
+    vector<Brew> brews = {{777, {0,0,0,4}, 100500}};
+    auto result = bfs(startWitch, brews);
+    printWithes(result);
+}
+
+int main()
+{
+    prod();
+    // test();
 }
