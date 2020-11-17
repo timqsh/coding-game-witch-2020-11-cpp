@@ -230,7 +230,9 @@ void prod()
 {
 
     // game loop
+    int turn = 0;
     while (1) {
+        turn ++;
         int actionCount; // the number of spells and recipes in play
         int actionId; // the unique ID of this spell or recipe
         int priciestBrewActionId;
@@ -241,6 +243,9 @@ void prod()
         vector<Learn> learns;
 
         cin >> actionCount; cin.ignore();
+        if (actionCount == 9999){
+            break; //DEBUG
+        }
         cerr << actionCount << endl;
         for (int i = 0; i < actionCount; i++) {
             string actionType; // in the first league: BREW; later: CAST, OPPONENT_CAST, LEARN, BREW
