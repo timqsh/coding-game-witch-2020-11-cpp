@@ -5,8 +5,8 @@
 #include <algorithm>
 #include <map>
 #include <deque>
-#include <time.h>
 #include <iomanip>
+#include <chrono>
 
 using namespace std;
 
@@ -119,7 +119,7 @@ Witch witchRest(Witch w)
     return result;
 }
 
-vector<string> bfs(Witch startWitch, vector<Brew> brews, time_t timeStart, bool timeControl = true)
+vector<string> bfs(Witch startWitch, vector<Brew> brews, chrono::steady_clock::time_point timeStart, bool timeControl = true)
 {
     vector<string> result;
     map<Witch, Witch> prev;
@@ -130,8 +130,13 @@ vector<string> bfs(Witch startWitch, vector<Brew> brews, time_t timeStart, bool 
     queue.push_back(startWitch);
     int iterations = 0;
     while (!queue.empty() > 0){
-        if (timeControl and (difftime(clock(), timeStart) > 40000)){
-            break;
+        if (timeControl){
+            auto currentTime = chrono::steady_clock::now();
+            chrono::duration<float> duration = currentTime - timeStart;
+            auto nanoseconds = duration.count();
+            if (nanoseconds > 40000){
+                break;
+            }
         }
         iterations++;
         Witch currentWitch = queue[0];
@@ -233,7 +238,7 @@ void prod()
             }
         }
 
-        auto start = clock();
+        auto t0 = chrono::steady_clock::now();
 
         // 0. Learn
         if (casts.size() < 10){
@@ -265,16 +270,17 @@ void prod()
         Witch myWitch;
         myWitch.inv = inv;
         myWitch.casts = casts;
-        auto result = bfs(myWitch, brews, start);
-        auto end = clock();
-        auto elapsed = difftime(end, start);
+        auto result = bfs(myWitch, brews, t0);
+        auto t1 = chrono::steady_clock::now();
+        chrono::duration<float> duration = t1 - t0;
+        auto nanoseconds = duration.count();
         if (result.size()>0){
             if (result.size()==1){
                 throw runtime_error("Bfs returned path with len=1, shoed have brewed before...");
             }
             auto firstMove = result[result.size()-2];
             cout << firstMove << " T-" + to_string(result.size()) 
-                + " " << setprecision(2) << elapsed/1000;
+                + " " << setprecision(2) << nanoseconds/1000;
             cout << endl;
             continue;
         }
@@ -328,7 +334,7 @@ void test()
         }
     };
     vector<Brew> brews = {{777, {0,0,0,-4}, 100500}};
-    auto result = bfs(startWitch, brews, clock(), false);
+    auto result = bfs(startWitch, brews, chrono::steady_clock::now(), false);
     printWithes(result);
 }
 
