@@ -1,4 +1,4 @@
-// #pragma GCC optimize "O3,omit-frame-pointer,inline"
+#pragma GCC optimize "O3,omit-frame-pointer,inline"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -282,7 +282,6 @@ void prod()
         // 3. Cast increases minimum
         int castId = -1;
         for (int i = 0; i < casts.size(); i++) {
-            cerr << casts[i].castable << " " << casts[i].actionId << endl;
             if (!casts[i].castable) {
                 continue;
             }
