@@ -1,4 +1,4 @@
-// #pragma GCC optimize "O3,omit-frame-pointer,inline"
+#pragma GCC optimize "O3,omit-frame-pointer,inline"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -152,7 +152,7 @@ vector<string> bfs(Witch startWitch, vector<Brew> brews, vector<Learn> learns, t
     queue.push_back(startWitch);
     int iterations = 0;
     while (!queue.empty() > 0){
-        if (timeControl and (difftime(clock(), timeStart) > 40000)){
+        if (timeControl and (difftime(clock(), timeStart) > 39000)){
             break;
         }
         iterations++;
