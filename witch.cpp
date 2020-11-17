@@ -33,6 +33,14 @@ struct Cast
     }
 };
 
+struct Learn
+{
+    int actionId;
+    vector<int> delta;
+    int tomeIndex;
+    int taxCount;
+};
+
 vector<int> add(vector<int> a, vector<int> b)
 {
     vector<int> res(4);
@@ -180,6 +188,7 @@ void prod()
 
         vector<Cast> casts;
         vector<Brew> brews;
+        vector<Learn> learns;
 
         cin >> actionCount; cin.ignore();
         for (int i = 0; i < actionCount; i++) {
@@ -204,6 +213,9 @@ void prod()
             } else if (actionType == "BREW") {
                 struct Brew brew = {actionId, vector<int>{delta0, delta1, delta2, delta3}, price};
                 brews.push_back(brew);
+            } else if (actionType == "LEARN") {
+                struct Learn learn = {actionId, vector<int>{delta0, delta1, delta2, delta3}, tomeIndex, taxCount};
+                learns.push_back(learn);
             }
         }
 
@@ -221,6 +233,18 @@ void prod()
         }
 
         auto start = clock();
+
+        // 0. Learn
+        if (casts.size() < 10){
+            Learn first_tome;
+            for(auto elem: learns){
+                if (elem.tomeIndex==0){
+                    first_tome = elem;
+                }
+            }
+            cout << "LEARN " << first_tome.actionId << endl;
+            continue;
+        }
 
         // 1. Can brew.
         int brewId = -1;
