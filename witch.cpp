@@ -23,6 +23,7 @@ struct Cast
     int actionId;
     vector<int> delta;
     bool castable;
+    bool repeatable;
 
     bool operator==(const Cast &c) const{
         return actionId==c.actionId && castable==c.castable;
@@ -164,6 +165,19 @@ vector<string> bfs(Witch startWitch, vector<Brew> brews, time_t timeStart, bool 
             queue.push_back(newWitch);
             prev.insert(make_pair(newWitch, currentWitch));
             actions.insert(make_pair(newWitch, "CAST " + to_string(cast.actionId) + " 1 "));
+            if (cast.repeatable){
+                int times = 1;
+                while (can(newWitch.inv, cast.delta)){
+                    times++;
+                    newWitch = witchCast(newWitch, cast);
+                    if (prev.find(newWitch) == prev.end()){
+                        queue.push_back(newWitch);
+                        prev.insert(make_pair(newWitch, currentWitch));
+                        actions.insert(make_pair(newWitch, 
+                            "CAST " + to_string(cast.actionId) + " " + to_string(times) + " MULTICAST! "));
+                    }
+                }
+            }
         }
 
         auto newWitch = witchRest(currentWitch);
@@ -209,7 +223,7 @@ void prod()
                 priciestBrewActionId = actionId;
             }
             if (actionType == "CAST"){
-                struct Cast cast = {actionId, vector<int>{delta0, delta1, delta2, delta3}, castable};
+                struct Cast cast = {actionId, vector<int>{delta0, delta1, delta2, delta3}, castable, repeatable};
                 casts.push_back(cast);
             } else if (actionType == "BREW") {
                 struct Brew brew = {actionId, vector<int>{delta0, delta1, delta2, delta3}, price};
