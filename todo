@@ -1,6 +1,6 @@
 (done) Simple bfs with big structure in dict
 
-get input from game (cin->cerr) -> python sctipt -> debug with "< input.txt"
+(wip) get input from game (cin->cerr) -> python script -> debug with "< input.txt"
 profile bfs
 optimise bfs
 

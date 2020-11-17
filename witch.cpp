@@ -1,4 +1,4 @@
-#pragma GCC optimize "O3,omit-frame-pointer,inline"
+// #pragma GCC optimize "O3,omit-frame-pointer,inline"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -241,6 +241,7 @@ void prod()
         vector<Learn> learns;
 
         cin >> actionCount; cin.ignore();
+        cerr << actionCount << endl;
         for (int i = 0; i < actionCount; i++) {
             string actionType; // in the first league: BREW; later: CAST, OPPONENT_CAST, LEARN, BREW
             int delta0; // tier-0 ingredient change
@@ -253,6 +254,7 @@ void prod()
             bool castable; // in the first league: always 0; later: 1 if this is a castable player spell
             bool repeatable; // for the first two leagues: always 0; later: 1 if this is a repeatable player spell
             cin >> actionId >> actionType >> delta0 >> delta1 >> delta2 >> delta3 >> price >> tomeIndex >> taxCount >> castable >> repeatable; cin.ignore();
+            cerr << actionId << " " << actionType << " " << delta0 << " " << delta1 << " " << delta2 << " " << delta3 << " " << price << " " << tomeIndex << " " << taxCount << " " << castable << " " << repeatable << endl;
             if (price > maxPrice) {
                 maxPrice = price;
                 priciestBrewActionId = actionId;
@@ -278,6 +280,7 @@ void prod()
             int inv3;
             int score; // amount of rupees
             cin >> inv0 >> inv1 >> inv2 >> inv3 >> score; cin.ignore();
+            cerr << inv0 << " " << inv1 << " " << inv2 << " " << inv3 << " " << score << endl;
             if (i == 0){
                 inv = vector<int>{inv0, inv1, inv2, inv3};
             }
