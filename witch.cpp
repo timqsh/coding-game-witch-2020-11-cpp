@@ -110,7 +110,7 @@ Witch witchRest(Witch w)
     return result;
 }
 
-vector<string> bfs(Witch startWitch, vector<Brew> brews)
+vector<string> bfs(Witch startWitch, vector<Brew> brews, time_t timeStart)
 {
     vector<string> result;
     map<Witch, Witch> prev;
@@ -121,6 +121,9 @@ vector<string> bfs(Witch startWitch, vector<Brew> brews)
     queue.push_back(startWitch);
     int iterations = 0;
     while (!queue.empty() > 0){
+        if (difftime(clock(), timeStart) > 40000){
+            break;
+        }
         iterations++;
         Witch currentWitch = queue[0];
         queue.pop_front();
@@ -237,7 +240,7 @@ void prod()
         Witch myWitch;
         myWitch.inv = inv;
         myWitch.casts = casts;
-        auto result = bfs(myWitch, brews);
+        auto result = bfs(myWitch, brews, start);
         auto end = clock();
         auto elapsed = difftime(end, start);
         if (result.size()>0){
@@ -299,8 +302,8 @@ void test()
             {444,{0,0,-1,1}, true}
         }
     };
-    vector<Brew> brews = {{777, {0,0,0,4}, 100500}};
-    auto result = bfs(startWitch, brews);
+    vector<Brew> brews = {{777, {0,0,0,-4}, 100500}};
+    auto result = bfs(startWitch, brews, clock());
     printWithes(result);
 }
 
