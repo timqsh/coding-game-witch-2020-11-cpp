@@ -183,16 +183,19 @@ vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, 
         }
 
         if (iterations==1){
+            int learnsCount = 0;
             for(auto learn:learns){
                 if (witchCanLearn(currentWitch, learn)){
+                    learnsCount ++;
+                    int castsLearnIndex = 64 - learnsCount;
                     
                     //witchLearn
                     auto newWitch = currentWitch;
-                    casts[63].actionId = 63;
-                    casts[63].delta = learn.delta;
-                    casts[63].repeatable = learn.repeatable;
-                    newWitch.casts[63] = true;
-                    newWitch.castable[63] = true;
+                    casts[castsLearnIndex].actionId = castsLearnIndex;
+                    casts[castsLearnIndex].delta = learn.delta;
+                    casts[castsLearnIndex].repeatable = learn.repeatable;
+                    newWitch.casts[castsLearnIndex] = true;
+                    newWitch.castable[castsLearnIndex] = true;
 
                     if (prev.find(newWitch) == prev.end()){
                         queue.push_back(newWitch);
