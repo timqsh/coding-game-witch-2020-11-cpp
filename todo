@@ -1,12 +1,15 @@
 (done) Simple bfs with big structure in dict
 
+[debug]
 (done) get input from game (cin->cerr) -> python script -> debug with "< input.txt"
 (done) profile bfs (gprof)
 
 [optimise bfs]
 (done) vector->array
-witch.casts -> witch.can_cast + witch.learned
+(done) witch.casts -> witch.can_cast + witch.learned
+can_cast & learned array<bool> -> bits array
 
+[strategy]
 (done) multicast in bfs
 (done) learn in bfs
 don't stop bfs -> return all paths -> choose by price

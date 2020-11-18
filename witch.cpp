@@ -191,11 +191,14 @@ vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, 
                     
                     //witchLearn
                     auto newWitch = currentWitch;
-                    casts[castsLearnIndex].actionId = castsLearnIndex;
+                    casts[castsLearnIndex].actionId = 256-learnsCount;
                     casts[castsLearnIndex].delta = learn.delta;
                     casts[castsLearnIndex].repeatable = learn.repeatable;
                     newWitch.casts[castsLearnIndex] = true;
                     newWitch.castable[castsLearnIndex] = true;
+                    newWitch.inv[0] -= learn.tomeIndex;
+                    auto freeSlots = 10 - newWitch.inv[0]-newWitch.inv[1]-newWitch.inv[2]-newWitch.inv[3];
+                    newWitch.inv[0] += min(learn.taxCount, freeSlots);
 
                     if (prev.find(newWitch) == prev.end()){
                         queue.push_back(newWitch);
