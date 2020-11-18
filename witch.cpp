@@ -85,8 +85,8 @@ bool increasesMinimum(array<int, 4> inv, array<int, 4> cast)
 struct Witch
 {
     array<int, 4> inv;
-    array<bool, 256> casts;
-    array<bool, 256> castable;
+    array<bool, 64> casts;
+    array<bool, 64> castable;
 
     bool operator==(const Witch &w) const{
         return inv==w.inv && casts==w.casts && castable==w.castable;
@@ -103,7 +103,7 @@ struct Witch
     }
 };
 
-Witch witchCast(Witch w, int castId, array<Cast,256> casts)
+Witch witchCast(Witch w, int castId, array<Cast,64> casts)
 {
     auto result = w;
     result.castable[castId] = false;
@@ -125,9 +125,9 @@ Witch witchLearn(Witch w, Learn l)
     auto result = w;
 
     // add cast to casts global table
-    Cast newCast = {255, l.delta, true, l.repeatable};
-    result.casts[255] = true;
-    result.castable[255] = true;
+    Cast newCast = {63, l.delta, true, l.repeatable};
+    result.casts[63] = true;
+    result.castable[63] = true;
 
     w.inv[0] -= l.tomeIndex;
     auto freeSlots = 10 - w.inv[0]-w.inv[1]-w.inv[2]-w.inv[3];
@@ -148,7 +148,7 @@ Witch cpWitch(Witch w)
     return result;
 }
 
-vector<string> bfs(Witch startWitch, array<Cast, 256> casts, vector<Brew> brews, vector<Learn> learns, time_t timeStart, bool timeControl)
+vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, vector<Learn> learns, time_t timeStart, bool timeControl)
 {
     vector<string> result;
     map<Witch, Witch> prev;
@@ -188,11 +188,11 @@ vector<string> bfs(Witch startWitch, array<Cast, 256> casts, vector<Brew> brews,
                     
                     //witchLearn
                     auto newWitch = currentWitch;
-                    casts[255].actionId = 255;
-                    casts[255].delta = learn.delta;
-                    casts[255].repeatable = learn.repeatable;
-                    newWitch.casts[255] = true;
-                    newWitch.castable[255] = true;
+                    casts[63].actionId = 63;
+                    casts[63].delta = learn.delta;
+                    casts[63].repeatable = learn.repeatable;
+                    newWitch.casts[63] = true;
+                    newWitch.castable[63] = true;
 
                     if (prev.find(newWitch) == prev.end()){
                         queue.push_back(newWitch);
@@ -204,7 +204,7 @@ vector<string> bfs(Witch startWitch, array<Cast, 256> casts, vector<Brew> brews,
             }
         }
 
-        for (int i=0; i<256; i++){
+        for (int i=0; i<64; i++){
             if (not currentWitch.casts[i]) {
                 continue;
             }
@@ -248,7 +248,7 @@ vector<string> bfs(Witch startWitch, array<Cast, 256> casts, vector<Brew> brews,
 
         //witchRest
         auto newWitch = currentWitch;
-        for (int i=0; i<256; i++) {
+        for (int i=0; i<64; i++) {
             newWitch.castable[i] = true;
         }
 
@@ -282,9 +282,9 @@ void prod()
         int priciestBrewActionId;
         int maxPrice = 0;
 
-        array<Cast, 256> casts;
+        array<Cast, 64> casts;
         int castsSize = 0;
-        for (int i=0; i<256; i++) {
+        for (int i=0; i<64; i++) {
             casts[i].actionId = -1;
             casts[i]._castable = false;
             casts[i].delta = {0,0,0,0};
@@ -316,7 +316,7 @@ void prod()
             }
             if (actionType == "CAST"){
                 struct Cast cast = {actionId, array<int, 4>{delta0, delta1, delta2, delta3}, castable, repeatable};
-                casts[actionId] = cast;
+                casts[i] = cast;
                 castsSize ++;
             } else if (actionType == "BREW") {
                 struct Brew brew = {actionId, array<int, 4>{delta0, delta1, delta2, delta3}, price};
@@ -373,7 +373,7 @@ void prod()
         // 2. BFS
         Witch myWitch;
         myWitch.inv = inv;
-        for (int i=0; i<256; i++) {
+        for (int i=0; i<64; i++) {
             myWitch.casts[i] = casts[i].actionId > -1;
             myWitch.castable[i] = casts[i]._castable;
         }
