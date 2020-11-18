@@ -345,7 +345,7 @@ void prod()
         auto start = clock();
 
         // 0. Learn
-        if ((castsSize < 10) and (not debug)){
+        if ((castsSize < 12) and (not debug)){
             Learn first_tome;
             for(auto elem: learns){
                 if (elem.tomeIndex==0){
