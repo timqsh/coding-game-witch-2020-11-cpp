@@ -19,7 +19,7 @@
             "args": ["<input.txt"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
+            "environment": [{"name": "DEBUG", "value": "true"}],
             "externalConsole": false,
             "MIMode": "gdb",
             "setupCommands": [

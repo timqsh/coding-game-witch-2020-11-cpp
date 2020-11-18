@@ -7,6 +7,7 @@
 #include <deque>
 #include <time.h>
 #include <iomanip>
+#include <cstdlib>
 
 using namespace std;
 
@@ -14,14 +15,14 @@ using namespace std;
 struct Brew
 {
     int actionId;
-    vector<int> delta;
+    array<int, 4> delta;
     int price;
 };
 
 struct Cast
 {
     int actionId;
-    vector<int> delta;
+    array<int, 4> delta;
     bool castable;
     bool repeatable;
 
@@ -38,22 +39,22 @@ struct Cast
 struct Learn
 {
     int actionId;
-    vector<int> delta;
+    array<int, 4> delta;
     int tomeIndex;
     int taxCount;
     bool repeatable;
 };
 
-vector<int> add(vector<int> a, vector<int> b)
+array<int, 4> add(array<int, 4> a, array<int, 4> b)
 {
-    vector<int> res(4);
+    array<int, 4> res;
     for (int i=0; i<4; i++){
         res[i] = a[i] + b[i];
     }
     return res;
 }
 
-bool can(vector<int> inv, vector<int> spell)
+bool can(array<int, 4> inv, array<int, 4> spell)
 {
     // 1. Enough ingredients 
     for (int i =0; i<4; i++){
@@ -69,7 +70,7 @@ bool can(vector<int> inv, vector<int> spell)
     return total <= 10;
 }
 
-bool increasesMinimum(vector<int> inv, vector<int> cast)
+bool increasesMinimum(array<int, 4> inv, array<int, 4> cast)
 {
     int m = *min_element(inv.begin(), inv.end());
     for (int i=1; i<cast.size(); i++){
@@ -83,7 +84,7 @@ bool increasesMinimum(vector<int> inv, vector<int> cast)
 
 struct Witch
 {
-    vector<int> inv;
+    array<int, 4> inv;
     vector<Cast> casts;
 
     bool operator==(const Witch &w) const{
@@ -141,7 +142,7 @@ bool witchCanLearn(Witch w, Learn l)
     return blues >= l.tomeIndex;
 }
 
-vector<string> bfs(Witch startWitch, vector<Brew> brews, vector<Learn> learns, time_t timeStart, bool timeControl = true)
+vector<string> bfs(Witch startWitch, vector<Brew> brews, vector<Learn> learns, time_t timeStart, bool timeControl)
 {
     vector<string> result;
     map<Witch, Witch> prev;
@@ -228,6 +229,14 @@ vector<string> bfs(Witch startWitch, vector<Brew> brews, vector<Learn> learns, t
 
 void prod()
 {
+    bool debug;
+    auto debug_env = getenv("DEBUG");
+    if (debug_env==NULL){
+        debug = false;
+    } else {
+        debug = (string)debug_env == (string)"true";
+        cerr << "DEBUG=true" << endl;
+    }
 
     // game loop
     int turn = 0;
@@ -265,19 +274,19 @@ void prod()
                 priciestBrewActionId = actionId;
             }
             if (actionType == "CAST"){
-                struct Cast cast = {actionId, vector<int>{delta0, delta1, delta2, delta3}, castable, repeatable};
+                struct Cast cast = {actionId, array<int, 4>{delta0, delta1, delta2, delta3}, castable, repeatable};
                 casts.push_back(cast);
             } else if (actionType == "BREW") {
-                struct Brew brew = {actionId, vector<int>{delta0, delta1, delta2, delta3}, price};
+                struct Brew brew = {actionId, array<int, 4>{delta0, delta1, delta2, delta3}, price};
                 brews.push_back(brew);
             } else if (actionType == "LEARN") {
-                struct Learn learn = {actionId, vector<int>{delta0, delta1, delta2, delta3}, 
+                struct Learn learn = {actionId, array<int, 4>{delta0, delta1, delta2, delta3}, 
                     tomeIndex, taxCount, repeatable};
                 learns.push_back(learn);
             }
         }
 
-        vector<int> inv;
+        array<int, 4> inv;
         for (int i = 0; i < 2; i++) {
             int inv0; // tier-0 ingredients in inventory
             int inv1;
@@ -287,7 +296,7 @@ void prod()
             cin >> inv0 >> inv1 >> inv2 >> inv3 >> score; cin.ignore();
             cerr << inv0 << " " << inv1 << " " << inv2 << " " << inv3 << " " << score << endl;
             if (i == 0){
-                inv = vector<int>{inv0, inv1, inv2, inv3};
+                inv = array<int, 4>{inv0, inv1, inv2, inv3};
             }
         }
 
@@ -323,7 +332,7 @@ void prod()
         Witch myWitch;
         myWitch.inv = inv;
         myWitch.casts = casts;
-        auto result = bfs(myWitch, brews, learns, start);
+        auto result = bfs(myWitch, brews, learns, start, (not debug));
         auto end = clock();
         auto elapsed = difftime(end, start);
         if (result.size()>0){
