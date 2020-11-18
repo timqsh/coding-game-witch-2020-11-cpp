@@ -324,7 +324,7 @@ void prod()
             }
         }
         if (brewId > -1) {
-            cout << "BREW " << brewId << endl;
+            cout << "BREW " << brewId << " BREW!" << endl;
             continue;
         }
 
@@ -340,8 +340,8 @@ void prod()
                 throw runtime_error("Bfs returned path with len=1, shoed have brewed before...");
             }
             auto firstMove = result[result.size()-2];
-            cout << firstMove << " T-" + to_string(result.size()) 
-                + " " << setprecision(2) << elapsed/1000;
+            cout << firstMove << " T-" + to_string(result.size()-1) 
+                + " " << setprecision(2) << elapsed/1000 << "ms";
             cout << endl;
             continue;
         }
@@ -362,12 +362,15 @@ void prod()
             break;
         }
         if (castId > -1) {
-            cout << "CAST " << castId << " 1 increase minimum" << endl;
+            cout << "CAST " << castId << " 1 increase minimum " 
+                << setprecision(2) << elapsed/1000 << "ms";
+            cout << endl;
             continue;
         }
 
         // 4. Rest
-        cout << "REST just rest" << endl;
+        cout << "REST just rest" << setprecision(2) << elapsed/1000 << "ms";
+        cout << endl;
 
         // in the first league: BREW <id> | WAIT; later: BREW <id> | CAST <id> [<times>] | LEARN <id> | REST | WAIT
         // cout << "CAST " << casts[0].actionId << endl;

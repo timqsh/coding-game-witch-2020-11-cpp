@@ -2,7 +2,10 @@
 
 (done) get input from game (cin->cerr) -> python script -> debug with "< input.txt"
 (done) profile bfs (gprof)
-optimise bfs
+
+[optimise bfs]
+(done) vector->array
+witch.casts -> witch.can_cast + witch.learned
 
 (done) multicast in bfs
 (done) learn in bfs
