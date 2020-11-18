@@ -85,17 +85,17 @@ bool increasesMinimum(array<int, 4> inv, array<int, 4> cast)
 struct Witch
 {
     array<int, 4> inv;
-    array<bool, 64> casts;
-    array<bool, 64> castable;
+    uint64_t castsMask;
+    uint64_t castableMask;
 
     bool operator==(const Witch &w) const{
-        return inv==w.inv && casts==w.casts && castable==w.castable;
+        return inv==w.inv && castsMask==w.castsMask && castableMask==w.castableMask;
     }
 
     bool operator<(const Witch &w) const{
         return inv<w.inv 
-            || (inv==w.inv && casts<w.casts)
-            || (inv==w.inv && casts==w.casts && castable<w.castable);
+            || (inv==w.inv && castsMask<w.castsMask)
+            || (inv==w.inv && castsMask==w.castsMask && castableMask<w.castableMask);
     }
 
     bool operator!=(const Witch &w) const{
@@ -103,38 +103,38 @@ struct Witch
     }
 };
 
-Witch witchCast(Witch w, int castId, array<Cast,64> casts)
-{
-    auto result = w;
-    result.castable[castId] = false;
-    result.inv = add(w.inv, casts[castId].delta);
-    return result;
-}
+// Witch witchCast(Witch w, int castId, array<Cast,64> casts)
+// {
+//     auto result = w;
+//     result.castable[castId] = false;
+//     result.inv = add(w.inv, casts[castId].delta);
+//     return result;
+// }
 
-Witch witchRest(Witch w)
-{
-    auto result = w;
-    for(int i=0; i<result.casts.size(); i++){
-        result.castable[i] = true;
-    }
-    return result;
-}
+// Witch witchRest(Witch w)
+// {
+//     auto result = w;
+//     for(int i=0; i<result.casts.size(); i++){
+//         result.castable[i] = true;
+//     }
+//     return result;
+// }
 
-Witch witchLearn(Witch w, Learn l)
-{
-    auto result = w;
+// Witch witchLearn(Witch w, Learn l)
+// {
+//     auto result = w;
 
-    // add cast to casts global table
-    Cast newCast = {63, l.delta, true, l.repeatable};
-    result.casts[63] = true;
-    result.castable[63] = true;
+//     // add cast to casts global table
+//     Cast newCast = {63, l.delta, true, l.repeatable};
+//     result.casts[63] = true;
+//     result.castable[63] = true;
 
-    w.inv[0] -= l.tomeIndex;
-    auto freeSlots = 10 - w.inv[0]-w.inv[1]-w.inv[2]-w.inv[3];
-    w.inv[0] += min(l.taxCount, freeSlots);
+//     w.inv[0] -= l.tomeIndex;
+//     auto freeSlots = 10 - w.inv[0]-w.inv[1]-w.inv[2]-w.inv[3];
+//     w.inv[0] += min(l.taxCount, freeSlots);
 
-    return result;
-}
+//     return result;
+// }
 
 bool witchCanLearn(Witch w, Learn l)
 {
@@ -187,15 +187,14 @@ vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, 
             for(auto learn:learns){
                 if (witchCanLearn(currentWitch, learn)){
                     learnsCount ++;
-                    int castsLearnIndex = 64 - learnsCount;
+                    int castsLearnIndex = 63 - learnsCount;
                     
                     //witchLearn
                     auto newWitch = currentWitch;
                     casts[castsLearnIndex].actionId = 256-learnsCount;
                     casts[castsLearnIndex].delta = learn.delta;
                     casts[castsLearnIndex].repeatable = learn.repeatable;
-                    newWitch.casts[castsLearnIndex] = true;
-                    newWitch.castable[castsLearnIndex] = true;
+                    newWitch.castsMask |= (1ull<<castsLearnIndex);
                     newWitch.inv[0] -= learn.tomeIndex;
                     auto freeSlots = 10 - newWitch.inv[0]-newWitch.inv[1]-newWitch.inv[2]-newWitch.inv[3];
                     newWitch.inv[0] += min(learn.taxCount, freeSlots);
@@ -211,10 +210,10 @@ vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, 
         }
 
         for (int i=0; i<64; i++){
-            if (not currentWitch.casts[i]) {
+            if (!(currentWitch.castsMask & (1ull<<i))) {
                 continue;
             }
-            if (not currentWitch.castable[i]){
+            if (!(currentWitch.castableMask & (1ull<<i))){
                 continue;
             }
             auto cast = casts[i];
@@ -224,7 +223,7 @@ vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, 
 
             //withCast
             auto newWitch = currentWitch;
-            newWitch.castable[i] = false;
+            newWitch.castableMask &= ~(1ull<<i);
             newWitch.inv = add(newWitch.inv, cast.delta);
 
             if (prev.find(newWitch) == prev.end()){
@@ -239,7 +238,7 @@ vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, 
 
                     //withCast
                     newWitch = cpWitch(newWitch);
-                    newWitch.castable[i] = false;
+                    newWitch.castableMask &= ~(1ull<<i);
                     newWitch.inv = add(newWitch.inv, cast.delta);
 
                     if (prev.find(newWitch) == prev.end()){
@@ -254,9 +253,7 @@ vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, 
 
         //witchRest
         auto newWitch = currentWitch;
-        for (int i=0; i<64; i++) {
-            newWitch.castable[i] = true;
-        }
+        newWitch.castableMask = 9223372036854775807ull;
 
         if (prev.find(newWitch) == prev.end()){
             queue.push_back(newWitch);
@@ -322,8 +319,8 @@ void prod()
             }
             if (actionType == "CAST"){
                 struct Cast cast = {actionId, array<int, 4>{delta0, delta1, delta2, delta3}, castable, repeatable};
-                casts[i] = cast;
-                castsSize ++;
+                casts[castsSize] = cast;
+                castsSize++;
             } else if (actionType == "BREW") {
                 struct Brew brew = {actionId, array<int, 4>{delta0, delta1, delta2, delta3}, price};
                 brews.push_back(brew);
@@ -379,9 +376,15 @@ void prod()
         // 2. BFS
         Witch myWitch;
         myWitch.inv = inv;
+        myWitch.castsMask = 0;
+        myWitch.castableMask = 9223372036854775807ull;
         for (int i=0; i<64; i++) {
-            myWitch.casts[i] = casts[i].actionId > -1;
-            myWitch.castable[i] = casts[i]._castable;
+            if (casts[i].actionId > -1) {
+                myWitch.castsMask |= (1ull<<i);
+                if (not casts[i]._castable) {
+                    myWitch.castableMask &= ~(1ull<<i);
+                }
+            }
         }
         auto result = bfs(myWitch, casts, brews, learns, start, (not debug));
         auto end = clock();

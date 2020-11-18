@@ -7,7 +7,7 @@
 [optimise bfs]
 (done) vector->array
 (done) witch.casts -> witch.can_cast + witch.learned
-can_cast & learned array<bool> -> bits array
+(done) can_cast & learned array<bool> -> bitmask
 
 [strategy]
 (done) multicast in bfs
