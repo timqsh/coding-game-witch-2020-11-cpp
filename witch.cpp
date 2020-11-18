@@ -303,7 +303,7 @@ void prod()
         auto start = clock();
 
         // 0. Learn
-        if (casts.size() < 10){
+        if (casts.size() < 12){
             Learn first_tome;
             for(auto elem: learns){
                 if (elem.tomeIndex==0){
