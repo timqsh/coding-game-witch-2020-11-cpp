@@ -139,7 +139,7 @@ vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, 
         iterations++;
         Witch currentWitch = queue[0];
         queue.pop_front();
-        if (timeControl and (difftime(clock(), timeStart) > 30000)){     
+        if (timeControl and (difftime(clock(), timeStart) > 28000)){     
 
             int maxScore = 0;
             int minTurns = 99999;
@@ -153,6 +153,7 @@ vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, 
                 }
             }
             Witch maxWitch = *maxWitchPointer;
+            cerr << "# queue:" << queue.size() << " dict:" << prev.size() << endl;
 
             while (maxWitch != startWitch){
                 result.push_back(actions[maxWitch] 
