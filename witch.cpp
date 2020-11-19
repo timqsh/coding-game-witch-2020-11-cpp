@@ -5,13 +5,16 @@
 #include <algorithm>
 #include <unordered_map>
 #include <deque>
-#include <time.h>
 #include <iomanip>
 #include <cstdlib>
 #include <bitset>
+#include <chrono>
 
 using namespace std;
 
+double currentMs() {
+    return chrono::duration<double>(chrono::steady_clock::now().time_since_epoch()).count() * 1000;
+}
 
 struct Brew
 {
@@ -125,7 +128,7 @@ bool witchCanLearn(const Witch& w, const Learn& l)
     return blues >= l.tomeIndex;
 }
 
-vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, vector<Learn> learns, time_t timeStart, bool timeControl)
+vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, vector<Learn> learns, double timeStart, bool timeControl)
 {
     vector<string> result;
     unordered_map<Witch, Witch> prev;
@@ -139,7 +142,7 @@ vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, 
         iterations++;
         Witch currentWitch = queue[0];
         queue.pop_front();
-        if (timeControl and (iterations%10==0) and (difftime(clock(), timeStart) > 28000)){     
+        if (timeControl and (iterations%10==0) and (currentMs() - timeStart > 28)){     
 
             int maxScore = 0;
             int minTurns = 99999;
@@ -359,7 +362,7 @@ void prod()
             }
         }
 
-        auto start = clock();
+        auto start = currentMs();
 
         // 0. Learn
         if ((castsSize < 12) and (not debug)){
@@ -404,8 +407,7 @@ void prod()
             }
         }
         auto result = bfs(myWitch, casts, brews, learns, start, (not debug));
-        auto end = clock();
-        auto elapsed = difftime(end, start);
+        auto elapsed = start - currentMs();
         if (result.size()>0){
             for(auto r:result){
                 cerr << "# path - " << r << endl;
