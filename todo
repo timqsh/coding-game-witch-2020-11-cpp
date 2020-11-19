@@ -8,10 +8,14 @@
 (done) vector->array
 (done) witch.casts -> witch.can_cast + witch.learned
 (done) can_cast & learned array<bool> -> bitmask
+int -> uint_8
+(done) map -> unordered_map (maybe hash combine from boost)
 
 [strategy]
 (done) multicast in bfs
 (done) learn in bfs
-don't stop bfs -> return all paths -> choose by price
+don't stop bfs on fastest brew -> return all paths -> choose by price
+add brews, score, turns (and maybe learns) to state 
+    -> don't stop on first brew -> sort by score - turns*1.5 + score(inv)/2
 
 smart learn (profit estimate, blue generation)

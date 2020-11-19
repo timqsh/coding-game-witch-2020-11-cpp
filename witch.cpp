@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <map>
+#include <unordered_map>
 #include <deque>
 #include <time.h>
 #include <iomanip>
@@ -25,15 +25,6 @@ struct Cast
     array<int, 4> delta;
     bool _castable;
     bool repeatable;
-
-    bool operator==(const Cast &c) const{
-        return actionId==c.actionId && _castable==c._castable;
-    }
-
-    bool operator<(const Cast &c) const{
-        return actionId<c.actionId
-            || (actionId==c.actionId && _castable<c._castable);
-    }
 };
 
 struct Learn
@@ -81,7 +72,6 @@ bool increasesMinimum(array<int, 4> inv, array<int, 4> cast)
     return true;
 }
 
-
 struct Witch
 {
     array<int, 4> inv;
@@ -92,68 +82,42 @@ struct Witch
         return inv==w.inv && castsMask==w.castsMask && castableMask==w.castableMask;
     }
 
-    bool operator<(const Witch &w) const{
-        return inv<w.inv 
-            || (inv==w.inv && castsMask<w.castsMask)
-            || (inv==w.inv && castsMask==w.castsMask && castableMask<w.castableMask);
-    }
-
     bool operator!=(const Witch &w) const{
         return not (*this==w);
     }
 };
 
-// Witch witchCast(Witch w, int castId, array<Cast,64> casts)
-// {
-//     auto result = w;
-//     result.castable[castId] = false;
-//     result.inv = add(w.inv, casts[castId].delta);
-//     return result;
-// }
+namespace std{
+template<>
+struct hash<Witch>
+{
+    std::size_t operator()(const Witch& w) const
+    {
+        std::size_t seed = 0;
 
-// Witch witchRest(Witch w)
-// {
-//     auto result = w;
-//     for(int i=0; i<result.casts.size(); i++){
-//         result.castable[i] = true;
-//     }
-//     return result;
-// }
+        for (auto e: w.inv) {
+            seed ^= hash<int>{}(e) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+        }
+        seed ^= hash<uint64_t>{}(w.castsMask) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+        seed ^= hash<uint64_t>{}(w.castableMask) + 0x9e3779b9 + (seed<<6) + (seed>>2);
 
-// Witch witchLearn(Witch w, Learn l)
-// {
-//     auto result = w;
+        return seed;
+    };
+};
+}
 
-//     // add cast to casts global table
-//     Cast newCast = {63, l.delta, true, l.repeatable};
-//     result.casts[63] = true;
-//     result.castable[63] = true;
-
-//     w.inv[0] -= l.tomeIndex;
-//     auto freeSlots = 10 - w.inv[0]-w.inv[1]-w.inv[2]-w.inv[3];
-//     w.inv[0] += min(l.taxCount, freeSlots);
-
-//     return result;
-// }
-
-bool witchCanLearn(Witch w, Learn l)
+bool witchCanLearn(const Witch& w, const Learn& l)
 {
     auto blues = w.inv[0];
     return blues >= l.tomeIndex;
 }
 
-Witch cpWitch(Witch w)
-{
-    auto result = w;
-    return result;
-}
-
 vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, vector<Learn> learns, time_t timeStart, bool timeControl)
 {
     vector<string> result;
-    map<Witch, Witch> prev;
+    unordered_map<Witch, Witch> prev;
     prev.insert(make_pair(startWitch, startWitch));
-    map<Witch, string> actions;
+    unordered_map<Witch, string> actions;
     actions.insert(make_pair(startWitch, "Start"));
     deque<Witch> queue;
     queue.push_back(startWitch);
@@ -237,7 +201,6 @@ vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, 
                     times++;
 
                     //withCast
-                    newWitch = cpWitch(newWitch);
                     newWitch.castableMask &= ~(1ull<<i);
                     newWitch.inv = add(newWitch.inv, cast.delta);
 
@@ -429,9 +392,6 @@ void prod()
         cout << "REST just rest" << setprecision(2) << elapsed/1000 << "ms";
         cout << endl;
 
-        // in the first league: BREW <id> | WAIT; later: BREW <id> | CAST <id> [<times>] | LEARN <id> | REST | WAIT
-        // cout << "CAST " << casts[0].actionId << endl;
-        // cout << "BREW " << priciestBrewActionId << endl;
     }
 }
 
@@ -441,23 +401,6 @@ void printWithes(vector<string> actions)
         cout << a << endl;
     }
 }
-
-// void test()
-// {
-//     Witch startWitch = {
-//         {3,0,0,0}, 
-//         {
-//             {111,{2,0,0,0}, true},
-//             {222,{-1,1,0,0}, true},
-//             {333,{0,-1,1,0}, true},
-//             {444,{0,0,-1,1}, true}
-//         }
-//     };
-//     vector<Brew> brews = {{777, {0,0,0,-4}, 100500}};
-//     vector<Learn> learns = {};
-//     auto result = bfs(startWitch, brews, learns, clock(), false);
-//     printWithes(result);
-// }
 
 int main()
 {
