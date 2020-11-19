@@ -313,6 +313,7 @@ void prod()
         vector<Learn> learns;
 
         cin >> actionCount; cin.ignore();
+        auto start = currentMs();
         if (actionCount == 9999){
             break; //DEBUG
         }
@@ -361,8 +362,6 @@ void prod()
                 inv = array<int16_t, 4>{inv0, inv1, inv2, inv3};
             }
         }
-
-        auto start = currentMs();
 
         // 0. Learn
         if ((castsSize < 12) and (not debug)){
