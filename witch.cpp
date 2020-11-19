@@ -142,7 +142,7 @@ vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, 
         iterations++;
         Witch currentWitch = queue[0];
         queue.pop_front();
-        if (timeControl and (iterations%10==0) and (currentMs() - timeStart > 28)){     
+        if (timeControl and (currentMs() - timeStart > 28)){     
 
             int maxScore = 0;
             int minTurns = 99999;
