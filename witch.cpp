@@ -15,14 +15,14 @@ using namespace std;
 struct Brew
 {
     int actionId;
-    array<int, 4> delta;
+    array<int16_t, 4> delta;
     int price;
 };
 
 struct Cast
 {
     int actionId;
-    array<int, 4> delta;
+    array<int16_t, 4> delta;
     bool _castable;
     bool repeatable;
 };
@@ -30,41 +30,41 @@ struct Cast
 struct Learn
 {
     int actionId;
-    array<int, 4> delta;
+    array<int16_t, 4> delta;
     int tomeIndex;
     int taxCount;
     bool repeatable;
 };
 
-array<int, 4> add(array<int, 4> a, array<int, 4> b)
+array<int16_t, 4> add(array<int16_t, 4> a, array<int16_t, 4> b)
 {
-    array<int, 4> res;
-    for (int i=0; i<4; i++){
+    array<int16_t, 4> res;
+    for (int16_t i=0; i<4; i++){
         res[i] = a[i] + b[i];
     }
     return res;
 }
 
-bool can(array<int, 4> inv, array<int, 4> spell)
+bool can(array<int16_t, 4> inv, array<int16_t, 4> spell)
 {
     // 1. Enough ingredients 
-    for (int i =0; i<4; i++){
+    for (int16_t i =0; i<4; i++){
         if (inv[i] + spell[i] < 0){
             return false;
         }
     }
     // 2. Enough space
-    int total = 0;
-    for (int i=0; i<4; i++) {
+    int16_t total = 0;
+    for (int16_t i=0; i<4; i++) {
         total += inv[i] + spell[i];
     }
     return total <= 10;
 }
 
-bool increasesMinimum(array<int, 4> inv, array<int, 4> cast)
+bool increasesMinimum(array<int16_t, 4> inv, array<int16_t, 4> cast)
 {
-    int m = *min_element(inv.begin(), inv.end());
-    for (int i=1; i<4; i++){
+    int16_t m = *min_element(inv.begin(), inv.end());
+    for (int16_t i=1; i<4; i++){
         if ((cast[i] > 0) && (inv[i] != m)){
             return false;
         }
@@ -74,7 +74,7 @@ bool increasesMinimum(array<int, 4> inv, array<int, 4> cast)
 
 struct Witch
 {
-    array<int, 4> inv;
+    array<int16_t, 4> inv;
     uint64_t castsMask;
     uint64_t castableMask;
 
@@ -265,10 +265,10 @@ void prod()
         cerr << actionCount << endl;
         for (int i = 0; i < actionCount; i++) {
             string actionType; // in the first league: BREW; later: CAST, OPPONENT_CAST, LEARN, BREW
-            int delta0; // tier-0 ingredient change
-            int delta1; // tier-1 ingredient change
-            int delta2; // tier-2 ingredient change
-            int delta3; // tier-3 ingredient change
+            int16_t delta0; // tier-0 ingredient change
+            int16_t delta1; // tier-1 ingredient change
+            int16_t delta2; // tier-2 ingredient change
+            int16_t delta3; // tier-3 ingredient change
             int price; // the price in rupees if this is a potion
             int tomeIndex; // in the first two leagues: always 0; later: the index in the tome if this is a tome spell, equal to the read-ahead tax; For brews, this is the value of the current urgency bonus
             int taxCount; // in the first two leagues: always 0; later: the amount of taxed tier-0 ingredients you gain from learning this spell; For brews, this is how many times you can still gain an urgency bonus
@@ -281,30 +281,30 @@ void prod()
                 priciestBrewActionId = actionId;
             }
             if (actionType == "CAST"){
-                struct Cast cast = {actionId, array<int, 4>{delta0, delta1, delta2, delta3}, castable, repeatable};
+                struct Cast cast = {actionId, array<int16_t, 4>{delta0, delta1, delta2, delta3}, castable, repeatable};
                 casts[castsSize] = cast;
                 castsSize++;
             } else if (actionType == "BREW") {
-                struct Brew brew = {actionId, array<int, 4>{delta0, delta1, delta2, delta3}, price};
+                struct Brew brew = {actionId, array<int16_t, 4>{delta0, delta1, delta2, delta3}, price};
                 brews.push_back(brew);
             } else if (actionType == "LEARN") {
-                struct Learn learn = {actionId, array<int, 4>{delta0, delta1, delta2, delta3}, 
+                struct Learn learn = {actionId, array<int16_t, 4>{delta0, delta1, delta2, delta3}, 
                     tomeIndex, taxCount, repeatable};
                 learns.push_back(learn);
             }
         }
 
-        array<int, 4> inv;
+        array<int16_t, 4> inv;
         for (int i = 0; i < 2; i++) {
-            int inv0; // tier-0 ingredients in inventory
-            int inv1;
-            int inv2;
-            int inv3;
+            int16_t inv0; // tier-0 ingredients in inventory
+            int16_t inv1;
+            int16_t inv2;
+            int16_t inv3;
             int score; // amount of rupees
             cin >> inv0 >> inv1 >> inv2 >> inv3 >> score; cin.ignore();
             cerr << inv0 << " " << inv1 << " " << inv2 << " " << inv3 << " " << score << endl;
             if (i == 0){
-                inv = array<int, 4>{inv0, inv1, inv2, inv3};
+                inv = array<int16_t, 4>{inv0, inv1, inv2, inv3};
             }
         }
 

@@ -8,7 +8,7 @@
 (done) vector->array
 (done) witch.casts -> witch.can_cast + witch.learned
 (done) can_cast & learned array<bool> -> bitmask
-int -> uint_8
+(done) int -> uint_16 (uint_8 is char...)
 (done) map -> unordered_map (maybe hash combine from boost)
 
 [strategy]
