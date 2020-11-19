@@ -407,7 +407,7 @@ void prod()
             }
         }
         auto result = bfs(myWitch, casts, brews, learns, start, (not debug));
-        auto elapsed = start - currentMs();
+        auto elapsed = currentMs() - start;
         if (result.size()>0){
             for(auto r:result){
                 cerr << "# path - " << r << endl;
@@ -417,7 +417,7 @@ void prod()
             }
             auto firstMove = result[result.size()-2];
             cout << firstMove << " T-" + to_string(result.size()-1) 
-                + " " << setprecision(2) << elapsed/1000 << "ms";
+                + " " << setprecision(2) << elapsed << "ms";
             cout << endl;
             continue;
         }
