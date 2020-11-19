@@ -10,12 +10,14 @@
 (done) can_cast & learned array<bool> -> bitmask
 (done) int -> uint_16 (uint_8 is char...)
 (done) map -> unordered_map (maybe hash combine from boost)
+optimise search for best path after bfs (+fix timeouts)
 
 [strategy]
 (done) multicast in bfs
 (done) learn in bfs
-don't stop bfs on fastest brew -> return all paths -> choose by price
-add brews, score, turns (and maybe learns) to state 
-    -> don't stop on first brew -> sort by score - turns*1.5 + score(inv)/2
+(not optimal) don't stop bfs on fastest brew -> return all paths -> choose by price
+(done) add brews, score, turns (and maybe learns) to state 
+    -> don't stop on first brew
+sort by score - turns*1.5 + score(inv)/2. Malus to brew proportional to turns.
 
 smart learn (profit estimate, blue generation)

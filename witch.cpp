@@ -8,6 +8,7 @@
 #include <time.h>
 #include <iomanip>
 #include <cstdlib>
+#include <bitset>
 
 using namespace std;
 
@@ -77,9 +78,18 @@ struct Witch
     array<int16_t, 4> inv;
     uint64_t castsMask;
     uint64_t castableMask;
+    int16_t score;
+    int16_t turns;
+    bitset<6> brewsRemaining;
 
     bool operator==(const Witch &w) const{
-        return inv==w.inv && castsMask==w.castsMask && castableMask==w.castableMask;
+        return inv==w.inv 
+            && castsMask==w.castsMask 
+            && castableMask==w.castableMask
+            && score==w.score
+            && turns==w.turns
+            && brewsRemaining==w.brewsRemaining
+            ;
     }
 
     bool operator!=(const Witch &w) const{
@@ -100,6 +110,9 @@ struct hash<Witch>
         }
         seed ^= hash<uint64_t>{}(w.castsMask) + 0x9e3779b9 + (seed<<6) + (seed>>2);
         seed ^= hash<uint64_t>{}(w.castableMask) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+        seed ^= hash<uint64_t>{}(w.score) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+        seed ^= hash<uint64_t>{}(w.turns) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+        seed ^= hash<bitset<6>>{}(w.brewsRemaining) + 0x9e3779b9 + (seed<<6) + (seed>>2);
 
         return seed;
     };
@@ -123,26 +136,60 @@ vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, 
     queue.push_back(startWitch);
     int iterations = 0;
     while (!queue.empty() > 0){
-        if (timeControl and (difftime(clock(), timeStart) > 39000)){
-            break;
-        }
         iterations++;
         Witch currentWitch = queue[0];
         queue.pop_front();
+        if (timeControl and (difftime(clock(), timeStart) > 30000)){     
+
+            int maxScore = 0;
+            int minTurns = 99999;
+            const Witch* maxWitchPointer;
+            for (auto it=prev.begin(); it!=prev.end(); it++) {
+                auto& w = it->first;
+                if (w.score>maxScore || w.score==maxScore && w.turns<minTurns) {
+                    maxScore = w.score;
+                    maxWitchPointer = &w;
+                    minTurns = w.turns;
+                }
+            }
+            Witch maxWitch = *maxWitchPointer;
+
+            while (maxWitch != startWitch){
+                result.push_back(actions[maxWitch] 
+                    + " score:" + to_string(maxScore) 
+                    + " nodes:" + to_string(prev.size()));
+                auto it = prev.find(maxWitch);
+                if (it == prev.end()){
+                    throw runtime_error("key in prev not found");
+                }
+                maxWitch = it->second;
+            }
+            result.push_back("Start"); // len = turns + 1
+            return result;
+
+            break;
+        }
 
         for (int i=0; i<brews.size(); i++){
             auto brew = brews[i];
-            if (can(currentWitch.inv, brew.delta)){
-                while (currentWitch != startWitch){
-                    result.push_back(actions[currentWitch]+" nodes:"+to_string(prev.size()));
-                    auto it = prev.find(currentWitch);
-                    if (it == prev.end()){
-                        throw runtime_error("key in prev not found");
-                    }
-                    currentWitch = it->second;
-                }
-                result.push_back("Start"); // len = turns + 1
-                return result;
+            if (not currentWitch.brewsRemaining.test(i)) {
+                continue;
+            }
+            if (not can(currentWitch.inv, brew.delta)){
+                continue;
+            }
+
+            auto newWitch = currentWitch;
+            newWitch.inv = add(newWitch.inv, brew.delta);
+            newWitch.turns++;
+            newWitch.score += brew.price;
+            newWitch.brewsRemaining.reset(i);
+
+            if (prev.find(newWitch) == prev.end()){
+                queue.push_back(newWitch);
+                prev.insert(make_pair(newWitch, currentWitch));
+                actions.insert(make_pair(newWitch, 
+                    "BREW " + to_string(brew.actionId) + " +BREWING!"));
             }
         }
 
@@ -162,6 +209,7 @@ vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, 
                     newWitch.inv[0] -= learn.tomeIndex;
                     auto freeSlots = 10 - newWitch.inv[0]-newWitch.inv[1]-newWitch.inv[2]-newWitch.inv[3];
                     newWitch.inv[0] += min(learn.taxCount, freeSlots);
+                    newWitch.turns++;
 
                     if (prev.find(newWitch) == prev.end()){
                         queue.push_back(newWitch);
@@ -189,6 +237,7 @@ vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, 
             auto newWitch = currentWitch;
             newWitch.castableMask &= ~(1ull<<i);
             newWitch.inv = add(newWitch.inv, cast.delta);
+            newWitch.turns++;
 
             if (prev.find(newWitch) == prev.end()){
                 queue.push_back(newWitch);
@@ -217,6 +266,7 @@ vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, 
         //witchRest
         auto newWitch = currentWitch;
         newWitch.castableMask = 9223372036854775807ull;
+        newWitch.turns++;
 
         if (prev.find(newWitch) == prev.end()){
             queue.push_back(newWitch);
@@ -323,24 +373,27 @@ void prod()
         }
 
         // 1. Can brew.
-        int brewId = -1;
-        for (int i = 0; i < brews.size(); i++) {
-            bool canBrew = can(inv, brews[i].delta);
-            if (canBrew) {
-                brewId = brews[i].actionId;
-                break;
-            }
-        }
-        if (brewId > -1) {
-            cout << "BREW " << brewId << " BREW!" << endl;
-            continue;
-        }
+        // int brewId = -1;
+        // for (int i = 0; i < brews.size(); i++) {
+        //     bool canBrew = can(inv, brews[i].delta);
+        //     if (canBrew) {
+        //         brewId = brews[i].actionId;
+        //         break;
+        //     }
+        // }
+        // if (brewId > -1) {
+        //     cout << "BREW " << brewId << " BREW!" << endl;
+        //     continue;
+        // }
 
         // 2. BFS
         Witch myWitch;
         myWitch.inv = inv;
         myWitch.castsMask = 0;
         myWitch.castableMask = 9223372036854775807ull;
+        myWitch.score = 0;
+        myWitch.turns = 0;
+        myWitch.brewsRemaining.set();
         for (int i=0; i<64; i++) {
             if (casts[i].actionId > -1) {
                 myWitch.castsMask |= (1ull<<i);
