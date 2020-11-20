@@ -18,14 +18,14 @@ inline double currentMs() {
 
 struct Brew
 {
-    int actionId;
+    int16_t actionId;
     array<int16_t, 4> delta;
     int price;
 };
 
 struct Cast
 {
-    int actionId;
+    int16_t actionId;
     array<int16_t, 4> delta;
     bool _castable;
     bool repeatable;
@@ -33,7 +33,7 @@ struct Cast
 
 struct Learn
 {
-    int actionId;
+    int16_t actionId;
     array<int16_t, 4> delta;
     int tomeIndex;
     int taxCount;
@@ -163,7 +163,6 @@ vector<string> bfs(
 {
     vector<string> result;
     prev.insert(make_pair(startWitch, startWitch));
-    // actions.insert(make_pair(startWitch, "Start"));
     queue.push_back(startWitch);
     int iterations = 0;
 
@@ -198,7 +197,6 @@ vector<string> bfs(
                 queue.push_back(newWitch);
                 prev.insert(make_pair(newWitch, currentWitch));
                 actions.insert(make_pair(newWitch, Action{aBrew, brew.actionId, 0}));
-                    // "BREW " + to_string(brew.actionId) + " +BREWING!"));
 
                 if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
                     maxScore = newWitch.score;
@@ -215,7 +213,6 @@ vector<string> bfs(
                     learnsCount ++;
                     int castsLearnIndex = 63 - learnsCount;
                     
-                    //witchLearn
                     auto newWitch = currentWitch;
                     casts[castsLearnIndex].actionId = 256-learnsCount;
                     casts[castsLearnIndex].delta = learn.delta;
@@ -230,7 +227,6 @@ vector<string> bfs(
                         queue.push_back(newWitch);
                         prev.insert(make_pair(newWitch, currentWitch));
                         actions.insert(make_pair(newWitch, Action{aLearn, learn.actionId, 0}));
-                            // "LEARN " + to_string(learn.actionId) + " +LEARNING!"));
 
                         if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
                             maxScore = newWitch.score;
@@ -254,7 +250,6 @@ vector<string> bfs(
                 continue;
             }
 
-            //withCast
             auto newWitch = currentWitch;
             newWitch.castableMask &= ~(1ull<<i);
             newWitch.inv = add(newWitch.inv, cast.delta);
@@ -264,7 +259,6 @@ vector<string> bfs(
                 queue.push_back(newWitch);
                 prev.insert(make_pair(newWitch, currentWitch));
                 actions.insert(make_pair(newWitch, Action{aCast, cast.actionId, 1}));
-                    // "CAST " + to_string(cast.actionId) + " 1 "));
 
                 if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
                     maxScore = newWitch.score;
@@ -273,11 +267,10 @@ vector<string> bfs(
                 }
             }
             if (cast.repeatable){
-                int times = 1;
+                int16_t times = 1;
                 while (can(newWitch.inv, cast.delta)){
                     times++;
 
-                    //withCast
                     newWitch.castableMask &= ~(1ull<<i);
                     newWitch.inv = add(newWitch.inv, cast.delta);
 
@@ -285,7 +278,6 @@ vector<string> bfs(
                         queue.push_back(newWitch);
                         prev.insert(make_pair(newWitch, currentWitch));
                         actions.insert(make_pair(newWitch, Action{aCast, cast.actionId, times}));
-                            // "CAST " + to_string(cast.actionId) + " " + to_string(times) + " MULTICAST! "));
 
                         if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
                             maxScore = newWitch.score;
@@ -297,7 +289,6 @@ vector<string> bfs(
             }
         }
 
-        //witchRest
         auto newWitch = currentWitch;
         newWitch.castableMask = 9223372036854775807ull;
         newWitch.turns++;
@@ -367,7 +358,7 @@ void prod()
 
         turn ++;
         int actionCount; // the number of spells and recipes in play
-        int actionId; // the unique ID of this spell or recipe
+        int16_t actionId; // the unique ID of this spell or recipe
         int priciestBrewActionId;
         int maxPrice = 0;
 
@@ -521,13 +512,6 @@ void prod()
         cout << "REST just rest" << setprecision(2) << elapsed/1000 << "ms";
         cout << endl;
 
-    }
-}
-
-void printWithes(vector<string> actions)
-{
-    for(auto a:actions){
-        cout << a << endl;
     }
 }
 
