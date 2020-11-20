@@ -175,7 +175,7 @@ vector<string> bfs(
         iterations++;
         Witch currentWitch = queue[0];
         queue.pop_front();
-        if (timeControl and (currentMs() - timeStart > 40)){     
+        if (timeControl and (currentMs() - timeStart > 45)){     
             break;
         }
 
