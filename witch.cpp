@@ -128,14 +128,21 @@ bool witchCanLearn(const Witch& w, const Learn& l)
     return blues >= l.tomeIndex;
 }
 
-vector<string> bfs(Witch startWitch, array<Cast, 64> casts, vector<Brew> brews, vector<Learn> learns, double timeStart, bool timeControl)
+vector<string> bfs(
+    Witch startWitch,
+    array<Cast, 64> casts,
+    vector<Brew> brews,
+    vector<Learn> learns,
+    double timeStart,
+    bool timeControl,
+    unordered_map<Witch, Witch>& prev,
+    unordered_map<Witch, string>& actions,
+    deque<Witch>& queue
+)
 {
     vector<string> result;
-    unordered_map<Witch, Witch> prev;
     prev.insert(make_pair(startWitch, startWitch));
-    unordered_map<Witch, string> actions;
     actions.insert(make_pair(startWitch, "Start"));
-    deque<Witch> queue;
     queue.push_back(startWitch);
     int iterations = 0;
     while (!queue.empty() > 0){
@@ -293,9 +300,18 @@ void prod()
         cerr << "DEBUG=true" << endl;
     }
 
+    unordered_map<Witch, Witch> prev;
+    unordered_map<Witch, string> actions;
+    deque<Witch> queue;
+
     // game loop
     int turn = 0;
     while (1) {
+
+        prev.clear();
+        actions.clear();
+        queue.clear();
+
         turn ++;
         int actionCount; // the number of spells and recipes in play
         int actionId; // the unique ID of this spell or recipe
@@ -405,7 +421,7 @@ void prod()
                 }
             }
         }
-        auto result = bfs(myWitch, casts, brews, learns, start, (not debug));
+        auto result = bfs(myWitch, casts, brews, learns, start, (not debug), prev, actions, queue);
         auto elapsed = currentMs() - start;
         if (result.size()>0){
             for(auto r:result){
