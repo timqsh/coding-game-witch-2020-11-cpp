@@ -149,7 +149,7 @@ vector<string> bfs(
         iterations++;
         Witch currentWitch = queue[0];
         queue.pop_front();
-        if (timeControl and (currentMs() - timeStart > 28)){     
+        if (timeControl and (currentMs() - timeStart > 33)){     
 
             int maxScore = 0;
             int minTurns = 99999;
@@ -308,10 +308,6 @@ void prod()
     int turn = 0;
     while (1) {
 
-        prev.clear();
-        actions.clear();
-        queue.clear();
-
         turn ++;
         int actionCount; // the number of spells and recipes in play
         int actionId; // the unique ID of this spell or recipe
@@ -422,6 +418,11 @@ void prod()
             }
         }
         auto result = bfs(myWitch, casts, brews, learns, start, (not debug), prev, actions, queue);
+
+        prev.clear();
+        actions.clear();
+        queue.clear();
+
         auto elapsed = currentMs() - start;
         if (result.size()>0){
             for(auto r:result){
