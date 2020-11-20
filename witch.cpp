@@ -168,6 +168,7 @@ vector<string> bfs(
 
     int maxScore = 0;
     int minTurns = 99999;
+    int maxTurns = 0;
     Witch maxWitch;
 
     while (!queue.empty() > 0){
@@ -177,6 +178,7 @@ vector<string> bfs(
         if (timeControl and (currentMs() - timeStart > 45)){     
             break;
         }
+        maxTurns = currentWitch.turns + 1;
 
         for (int i=0; i<brews.size(); i++){
             auto brew = brews[i];
@@ -325,7 +327,8 @@ vector<string> bfs(
         resultStr += " ";
         result.push_back(resultStr
             + " score:" + to_string(maxScore) 
-            + " nodes:" + to_string(prev.size()));
+            + " nodes:" + to_string(prev.size())
+            + " max turns:" + to_string(maxTurns));
         auto it = prev.find(maxWitch);
         if (it == prev.end()){
             throw runtime_error("key in prev not found");
