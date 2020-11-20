@@ -134,6 +134,21 @@ inline bool witchCanLearn(const Witch& w, const Learn& l)
     return blues >= l.tomeIndex;
 }
 
+enum ActionType {aBrew, aLearn, aCast, aRest};
+
+struct Action
+{
+    inline Action() = default;
+    inline Action(Action const&) = default;
+    inline Action(Action&&) = default;
+    inline Action& operator=(Action const&) = default;
+    inline Action& operator=(Action&&) = default;
+
+    ActionType type;
+    int16_t id;
+    int16_t times;
+};
+
 vector<string> bfs(
     Witch startWitch,
     array<Cast, 64> casts,
@@ -142,13 +157,13 @@ vector<string> bfs(
     double timeStart,
     bool timeControl,
     unordered_map<Witch, Witch>& prev,
-    unordered_map<Witch, string>& actions,
+    unordered_map<Witch, Action>& actions,
     deque<Witch>& queue
 )
 {
     vector<string> result;
     prev.insert(make_pair(startWitch, startWitch));
-    actions.insert(make_pair(startWitch, "Start"));
+    // actions.insert(make_pair(startWitch, "Start"));
     queue.push_back(startWitch);
     int iterations = 0;
 
@@ -182,8 +197,8 @@ vector<string> bfs(
             if (prev.find(newWitch) == prev.end()){
                 queue.push_back(newWitch);
                 prev.insert(make_pair(newWitch, currentWitch));
-                actions.insert(make_pair(newWitch, 
-                    "BREW " + to_string(brew.actionId) + " +BREWING!"));
+                actions.insert(make_pair(newWitch, Action{aBrew, brew.actionId, 0}));
+                    // "BREW " + to_string(brew.actionId) + " +BREWING!"));
 
                 if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
                     maxScore = newWitch.score;
@@ -214,8 +229,8 @@ vector<string> bfs(
                     if (prev.find(newWitch) == prev.end()){
                         queue.push_back(newWitch);
                         prev.insert(make_pair(newWitch, currentWitch));
-                        actions.insert(make_pair(newWitch, 
-                            "LEARN " + to_string(learn.actionId) + " +LEARNING!"));
+                        actions.insert(make_pair(newWitch, Action{aLearn, learn.actionId, 0}));
+                            // "LEARN " + to_string(learn.actionId) + " +LEARNING!"));
 
                         if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
                             maxScore = newWitch.score;
@@ -248,7 +263,8 @@ vector<string> bfs(
             if (prev.find(newWitch) == prev.end()){
                 queue.push_back(newWitch);
                 prev.insert(make_pair(newWitch, currentWitch));
-                actions.insert(make_pair(newWitch, "CAST " + to_string(cast.actionId) + " 1 "));
+                actions.insert(make_pair(newWitch, Action{aCast, cast.actionId, 1}));
+                    // "CAST " + to_string(cast.actionId) + " 1 "));
 
                 if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
                     maxScore = newWitch.score;
@@ -268,8 +284,8 @@ vector<string> bfs(
                     if (prev.find(newWitch) == prev.end()){
                         queue.push_back(newWitch);
                         prev.insert(make_pair(newWitch, currentWitch));
-                        actions.insert(make_pair(newWitch, 
-                            "CAST " + to_string(cast.actionId) + " " + to_string(times) + " MULTICAST! "));
+                        actions.insert(make_pair(newWitch, Action{aCast, cast.actionId, times}));
+                            // "CAST " + to_string(cast.actionId) + " " + to_string(times) + " MULTICAST! "));
 
                         if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
                             maxScore = newWitch.score;
@@ -289,7 +305,7 @@ vector<string> bfs(
         if (prev.find(newWitch) == prev.end()){
             queue.push_back(newWitch);
             prev.insert(make_pair(newWitch, currentWitch));
-            actions.insert(make_pair(newWitch, "REST "));
+            actions.insert(make_pair(newWitch, Action{aRest, 0, 0}));
 
             if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
                 maxScore = newWitch.score;
@@ -304,7 +320,19 @@ vector<string> bfs(
     }
 
     while (maxWitch != startWitch){
-        result.push_back(actions[maxWitch] 
+        auto a = actions[maxWitch];
+        string resultStr = "";
+        if (a.type == aBrew) {
+            resultStr += "BREW " + to_string(a.id);
+        } else if (a.type == aLearn) {
+            resultStr += "LEARN " + to_string(a.id);
+        } else if (a.type == aCast) {
+            resultStr += "CAST " + to_string(a.id) + " " + to_string(a.times);
+        } else if (a.type == aRest) {
+            resultStr += "REST";
+        }
+        resultStr += " ";
+        result.push_back(resultStr
             + " score:" + to_string(maxScore) 
             + " nodes:" + to_string(prev.size()));
         auto it = prev.find(maxWitch);
@@ -330,7 +358,7 @@ void prod()
     }
 
     unordered_map<Witch, Witch> prev;
-    unordered_map<Witch, string> actions;
+    unordered_map<Witch, Action> actions;
     deque<Witch> queue;
 
     // game loop
