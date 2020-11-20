@@ -1,16 +1,17 @@
-#pragma GCC optimize "O3,omit-frame-pointer,inline"
+// #pragma GCC optimize "O3,omit-frame-pointer,inline"
 #include <iostream>
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <unordered_map>
-#include <deque>
 #include <iomanip>
 #include <cstdlib>
 #include <bitset>
 #include <chrono>
+#include <stdlib.h>
 
 using namespace std;
+
+// const size_t MAX_STATES = 130000;
 
 inline double currentMs() {
     return chrono::duration<double>(chrono::steady_clock::now().time_since_epoch()).count() * 1000;
@@ -76,64 +77,6 @@ bool increasesMinimum(array<int16_t, 4> inv, array<int16_t, 4> cast)
     return true;
 }
 
-struct Witch
-{
-    inline Witch() = default;
-    inline Witch(Witch const&) = default;
-    inline Witch(Witch&&) = default;
-    inline Witch& operator=(Witch const&) = default;
-    inline Witch& operator=(Witch&&) = default;
-
-    array<int16_t, 4> inv;
-    uint64_t castsMask;
-    uint64_t castableMask;
-    int16_t score;
-    int16_t turns;
-    bitset<6> brewsRemaining;
-
-    inline bool operator==(const Witch &w) const{
-        return inv==w.inv 
-            && castsMask==w.castsMask 
-            && castableMask==w.castableMask
-            && score==w.score
-            // && turns==w.turns
-            && brewsRemaining==w.brewsRemaining
-            ;
-    }
-
-    inline bool operator!=(const Witch &w) const{
-        return not (*this==w);
-    }
-};
-
-namespace std{
-template<>
-struct hash<Witch>
-{
-    inline std::size_t operator()(const Witch& w) const
-    {
-        std::size_t seed = 0;
-
-        for (auto e: w.inv) {
-            seed ^= hash<int>{}(e) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-        }
-        seed ^= hash<uint64_t>{}(w.castsMask) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-        seed ^= hash<uint64_t>{}(w.castableMask) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-        seed ^= hash<uint64_t>{}(w.score) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-        // seed ^= hash<uint64_t>{}(w.turns) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-        seed ^= hash<bitset<6>>{}(w.brewsRemaining) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-
-        return seed;
-    };
-};
-}
-
-inline bool witchCanLearn(const Witch& w, const Learn& l)
-{
-    auto blues = w.inv[0];
-    return blues >= l.tomeIndex;
-}
-
 enum ActionType {aBrew, aLearn, aCast, aRest};
 
 struct Action
@@ -149,6 +92,30 @@ struct Action
     int16_t times;
 };
 
+struct Witch
+{
+    inline Witch() = default;
+    inline Witch(Witch const&) = default;
+    inline Witch(Witch&&) = default;
+    inline Witch& operator=(Witch const&) = default;
+    inline Witch& operator=(Witch&&) = default;
+
+    array<int16_t, 4> inv;
+    uint64_t castsMask;
+    uint64_t castableMask;
+    int16_t score;
+    int16_t turns;
+    bitset<6> brewsRemaining;
+    Action action;
+    int parentIndex;
+};
+
+inline bool witchCanLearn(const Witch& w, const Learn& l)
+{
+    auto blues = w.inv[0];
+    return blues >= l.tomeIndex;
+}
+
 vector<string> bfs(
     Witch startWitch,
     array<Cast, 64> casts,
@@ -156,29 +123,40 @@ vector<string> bfs(
     vector<Learn> learns,
     double timeStart,
     bool timeControl,
-    unordered_map<Witch, Witch>& prev,
-    unordered_map<Witch, Action>& actions,
-    deque<Witch>& queue
+    vector<Witch>& states
 )
 {
     vector<string> result;
-    prev.insert(make_pair(startWitch, startWitch));
-    queue.push_back(startWitch);
+
+    int head = 0;
+    int tail = 0;
+
+    startWitch.parentIndex = -1;
+    states[tail] = startWitch;
+    tail++;
+
     int iterations = 0;
 
     int maxScore = 0;
     int minTurns = 99999;
     Witch maxWitch;
 
-    while (!queue.empty() > 0){
+    while (tail>head){
         iterations++;
-        Witch currentWitch = queue[0];
-        queue.pop_front();
+
+        int parentIndex = head;
+        auto currentWitch = states[head];
+        head++;
+
+        // if (tail > MAX_STATES - 100) {
+        //     break;
+        // }
+
         if (timeControl and (currentMs() - timeStart > 45)){     
             break;
         }
 
-        for (int i=0; i<brews.size(); i++){
+        for (size_t i=0; i<brews.size(); i++){
             auto brew = brews[i];
             if (not currentWitch.brewsRemaining.test(i)) {
                 continue;
@@ -192,17 +170,16 @@ vector<string> bfs(
             newWitch.turns++;
             newWitch.score += brew.price;
             newWitch.brewsRemaining.reset(i);
+            newWitch.action = Action{aBrew, brew.actionId, 0};
+            newWitch.parentIndex = parentIndex;
 
-            if (prev.find(newWitch) == prev.end()){
-                queue.push_back(newWitch);
-                prev.insert(make_pair(newWitch, currentWitch));
-                actions.insert(make_pair(newWitch, Action{aBrew, brew.actionId, 0}));
+            states[tail] = newWitch;
+            tail++;
 
-                if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
-                    maxScore = newWitch.score;
-                    maxWitch = newWitch;
-                    minTurns = newWitch.turns;
-                }
+            if (newWitch.score>maxScore || (newWitch.score==maxScore && newWitch.turns<minTurns)) {
+                maxScore = newWitch.score;
+                maxWitch = newWitch;
+                minTurns = newWitch.turns;
             }
         }
 
@@ -222,17 +199,16 @@ vector<string> bfs(
                     auto freeSlots = 10 - newWitch.inv[0]-newWitch.inv[1]-newWitch.inv[2]-newWitch.inv[3];
                     newWitch.inv[0] += min(learn.taxCount, freeSlots);
                     newWitch.turns++;
+                    newWitch.action = Action{aLearn, learn.actionId, 0};
+                    newWitch.parentIndex = parentIndex;
 
-                    if (prev.find(newWitch) == prev.end()){
-                        queue.push_back(newWitch);
-                        prev.insert(make_pair(newWitch, currentWitch));
-                        actions.insert(make_pair(newWitch, Action{aLearn, learn.actionId, 0}));
+                    states[tail] = newWitch;
+                    tail++;
 
-                        if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
-                            maxScore = newWitch.score;
-                            maxWitch = newWitch;
-                            minTurns = newWitch.turns;
-                        }
+                    if (newWitch.score>maxScore || (newWitch.score==maxScore && newWitch.turns<minTurns)) {
+                        maxScore = newWitch.score;
+                        maxWitch = newWitch;
+                        minTurns = newWitch.turns;
                     }
                 }
             }
@@ -254,17 +230,16 @@ vector<string> bfs(
             newWitch.castableMask &= ~(1ull<<i);
             newWitch.inv = add(newWitch.inv, cast.delta);
             newWitch.turns++;
+            newWitch.action = Action{aCast, cast.actionId, 1};
+            newWitch.parentIndex = parentIndex;
 
-            if (prev.find(newWitch) == prev.end()){
-                queue.push_back(newWitch);
-                prev.insert(make_pair(newWitch, currentWitch));
-                actions.insert(make_pair(newWitch, Action{aCast, cast.actionId, 1}));
+            states[tail] = newWitch;
+            tail++;
 
-                if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
-                    maxScore = newWitch.score;
-                    maxWitch = newWitch;
-                    minTurns = newWitch.turns;
-                }
+            if (newWitch.score>maxScore || (newWitch.score==maxScore && newWitch.turns<minTurns)) {
+                maxScore = newWitch.score;
+                maxWitch = newWitch;
+                minTurns = newWitch.turns;
             }
             if (cast.repeatable){
                 int16_t times = 1;
@@ -273,45 +248,44 @@ vector<string> bfs(
 
                     newWitch.castableMask &= ~(1ull<<i);
                     newWitch.inv = add(newWitch.inv, cast.delta);
+                    newWitch.action = Action{aCast, cast.actionId, times};
+                    newWitch.parentIndex = parentIndex;
 
-                    if (prev.find(newWitch) == prev.end()){
-                        queue.push_back(newWitch);
-                        prev.insert(make_pair(newWitch, currentWitch));
-                        actions.insert(make_pair(newWitch, Action{aCast, cast.actionId, times}));
+                    states[tail] = newWitch;
+                    tail++;
 
-                        if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
-                            maxScore = newWitch.score;
-                            maxWitch = newWitch;
-                            minTurns = newWitch.turns;
-                        }
+                    if (newWitch.score>maxScore || (newWitch.score==maxScore && newWitch.turns<minTurns)) {
+                        maxScore = newWitch.score;
+                        maxWitch = newWitch;
+                        minTurns = newWitch.turns;
                     }
                 }
             }
         }
 
-        auto newWitch = currentWitch;
-        newWitch.castableMask = 9223372036854775807ull;
-        newWitch.turns++;
+        if (currentWitch.castableMask != 9223372036854775807ull){
+            auto newWitch = currentWitch;
+            newWitch.castableMask = 9223372036854775807ull;
+            newWitch.turns++;
+            newWitch.action = Action{aRest, 0, 0};
+            newWitch.parentIndex = parentIndex;
 
-        if (prev.find(newWitch) == prev.end()){
-            queue.push_back(newWitch);
-            prev.insert(make_pair(newWitch, currentWitch));
-            actions.insert(make_pair(newWitch, Action{aRest, 0, 0}));
+            states[tail] = newWitch;
+            tail++;
 
-            if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
+            if (newWitch.score>maxScore || (newWitch.score==maxScore && newWitch.turns<minTurns)) {
                 maxScore = newWitch.score;
                 maxWitch = newWitch;
                 minTurns = newWitch.turns;
             }
         }
     }
-    cerr << "# queue:" << queue.size() << " dict:" << prev.size() << endl;
     if (maxScore <= 0) {
         return result; // not fount -> empty
     }
 
-    while (maxWitch != startWitch){
-        auto a = actions[maxWitch];
+    while (maxWitch.parentIndex != -1){
+        auto a = maxWitch.action;
         string resultStr = "";
         if (a.type == aBrew) {
             resultStr += "BREW " + to_string(a.id);
@@ -325,12 +299,8 @@ vector<string> bfs(
         resultStr += " ";
         result.push_back(resultStr
             + " score:" + to_string(maxScore) 
-            + " nodes:" + to_string(prev.size()));
-        auto it = prev.find(maxWitch);
-        if (it == prev.end()){
-            throw runtime_error("key in prev not found");
-        }
-        maxWitch = it->second;
+            + " nodes:" + to_string(tail-head));
+        maxWitch = states[maxWitch.parentIndex];
     }
     result.push_back("Start"); // len = turns + 1
     return result;
@@ -339,7 +309,7 @@ vector<string> bfs(
 
 void prod()
 {
-    bool debug;
+    bool debug = false;
     auto debug_env = getenv("DEBUG");
     if (debug_env==NULL){
         debug = false;
@@ -348,9 +318,7 @@ void prod()
         cerr << "DEBUG=true" << endl;
     }
 
-    unordered_map<Witch, Witch> prev;
-    unordered_map<Witch, Action> actions;
-    deque<Witch> queue;
+    vector<Witch> states(300000);
 
     // game loop
     int turn = 0;
@@ -359,7 +327,6 @@ void prod()
         turn ++;
         int actionCount; // the number of spells and recipes in play
         int16_t actionId; // the unique ID of this spell or recipe
-        int priciestBrewActionId;
         int maxPrice = 0;
 
         array<Cast, 64> casts;
@@ -393,7 +360,6 @@ void prod()
             cerr << actionId << " " << actionType << " " << delta0 << " " << delta1 << " " << delta2 << " " << delta3 << " " << price << " " << tomeIndex << " " << taxCount << " " << castable << " " << repeatable << endl;
             if (price > maxPrice) {
                 maxPrice = price;
-                priciestBrewActionId = actionId;
             }
             if (actionType == "CAST"){
                 struct Cast cast = {actionId, array<int16_t, 4>{delta0, delta1, delta2, delta3}, castable, repeatable};
@@ -466,10 +432,7 @@ void prod()
             }
         }
 
-        prev.clear();
-        actions.clear();
-        queue.clear();
-        auto result = bfs(myWitch, casts, brews, learns, start, (not debug), prev, actions, queue);
+        auto result = bfs(myWitch, casts, brews, learns, start, (not debug), states);
 
         auto elapsed = currentMs() - start;
         if (result.size()>0){
@@ -488,7 +451,7 @@ void prod()
 
         // 3. Cast increases minimum
         int castId = -1;
-        for (int i = 0; i < casts.size(); i++) {
+        for (size_t i = 0; i < casts.size(); i++) {
             if (!casts[i]._castable) {
                 continue;
             }
