@@ -1,4 +1,4 @@
-// #pragma GCC optimize "O3,omit-frame-pointer,inline"
+#pragma GCC optimize "O3,omit-frame-pointer,inline"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -154,7 +154,7 @@ vector<string> bfs(
         iterations++;
         Witch currentWitch = queue[0];
         queue.pop_front();
-        if (timeControl and (currentMs() - timeStart > 33)){     
+        if (timeControl and (currentMs() - timeStart > 40)){     
             break;
         }
 

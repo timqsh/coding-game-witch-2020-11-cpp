@@ -11,11 +11,11 @@ api -> get timeouts
 (done) can_cast & learned array<bool> -> bitmask
 (done) int -> uint_16 (uint_8 is char...)
 (done) map -> unordered_map (maybe hash combine from boost)
-optimise search for best path after bfs
-more timer checks inside loop (to fix timeouts)
-move semantics / less allocations
+(done) optimise search for best path after bfs
 (done) allocate queue and dict once (to fix timeouts)
+more timer checks inside loop (to fix timeouts)
 inline struct constructors and assigment operators (return result; // not fount -> empty)
+move semantics / less allocations
 
 [strategy]
 (done) multicast in bfs
