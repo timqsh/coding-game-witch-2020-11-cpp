@@ -1,4 +1,4 @@
-#pragma GCC optimize "O3,omit-frame-pointer,inline"
+// #pragma GCC optimize "O3,omit-frame-pointer,inline"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -90,7 +90,7 @@ struct Witch
             && castsMask==w.castsMask 
             && castableMask==w.castableMask
             && score==w.score
-            && turns==w.turns
+            // && turns==w.turns
             && brewsRemaining==w.brewsRemaining
             ;
     }
@@ -114,7 +114,7 @@ struct hash<Witch>
         seed ^= hash<uint64_t>{}(w.castsMask) + 0x9e3779b9 + (seed<<6) + (seed>>2);
         seed ^= hash<uint64_t>{}(w.castableMask) + 0x9e3779b9 + (seed<<6) + (seed>>2);
         seed ^= hash<uint64_t>{}(w.score) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-        seed ^= hash<uint64_t>{}(w.turns) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+        // seed ^= hash<uint64_t>{}(w.turns) + 0x9e3779b9 + (seed<<6) + (seed>>2);
         seed ^= hash<bitset<6>>{}(w.brewsRemaining) + 0x9e3779b9 + (seed<<6) + (seed>>2);
 
         return seed;
@@ -150,34 +150,6 @@ vector<string> bfs(
         Witch currentWitch = queue[0];
         queue.pop_front();
         if (timeControl and (currentMs() - timeStart > 33)){     
-
-            int maxScore = 0;
-            int minTurns = 99999;
-            const Witch* maxWitchPointer;
-            for (auto it=prev.begin(); it!=prev.end(); it++) {
-                auto& w = it->first;
-                if (w.score>maxScore || w.score==maxScore && w.turns<minTurns) {
-                    maxScore = w.score;
-                    maxWitchPointer = &w;
-                    minTurns = w.turns;
-                }
-            }
-            Witch maxWitch = *maxWitchPointer;
-            cerr << "# queue:" << queue.size() << " dict:" << prev.size() << endl;
-
-            while (maxWitch != startWitch){
-                result.push_back(actions[maxWitch] 
-                    + " score:" + to_string(maxScore) 
-                    + " nodes:" + to_string(prev.size()));
-                auto it = prev.find(maxWitch);
-                if (it == prev.end()){
-                    throw runtime_error("key in prev not found");
-                }
-                maxWitch = it->second;
-            }
-            result.push_back("Start"); // len = turns + 1
-            return result;
-
             break;
         }
 
@@ -285,7 +257,36 @@ vector<string> bfs(
             actions.insert(make_pair(newWitch, "REST "));
         }
     }
-    return result; // not fount -> empty
+
+    int maxScore = 0;
+    int minTurns = 99999;
+    const Witch* maxWitchPointer;
+    for (auto it=prev.begin(); it!=prev.end(); it++) {
+        auto& w = it->first;
+        if (w.score>maxScore || w.score==maxScore && w.turns<minTurns) {
+            maxScore = w.score;
+            maxWitchPointer = &w;
+            minTurns = w.turns;
+        }
+    }
+    Witch maxWitch = *maxWitchPointer;
+    cerr << "# queue:" << queue.size() << " dict:" << prev.size() << endl;
+    if (maxScore <= 0) {
+        return result; // not fount -> empty
+    }
+
+    while (maxWitch != startWitch){
+        result.push_back(actions[maxWitch] 
+            + " score:" + to_string(maxScore) 
+            + " nodes:" + to_string(prev.size()));
+        auto it = prev.find(maxWitch);
+        if (it == prev.end()){
+            throw runtime_error("key in prev not found");
+        }
+        maxWitch = it->second;
+    }
+    result.push_back("Start"); // len = turns + 1
+    return result;
 }
 
 
