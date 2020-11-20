@@ -104,7 +104,7 @@ struct Witch
     array<int16_t, 4> inv;
     uint64_t castsMask;
     uint64_t castableMask;
-    int16_t score;
+    double score;
     int16_t turns;
     bitset<6> brewsRemaining;
     Action action;
@@ -168,7 +168,7 @@ vector<string> bfs(
     queue.push_back(startWitch);
     int iterations = 0;
 
-    int maxScore = 0;
+    double maxScore = 0;
     int minTurns = 99999;
     int maxTurns = 0;
     Witch maxWitch;
@@ -182,7 +182,7 @@ vector<string> bfs(
         }
         maxTurns = currentWitch.turns + 1;
 
-        for (int i=0; i<brews.size(); i++){
+        for (size_t i=0; i<brews.size(); i++){
             auto brew = brews[i];
             if (not currentWitch.brewsRemaining.test(i)) {
                 continue;
@@ -193,8 +193,9 @@ vector<string> bfs(
 
             auto newWitch = currentWitch;
             newWitch.inv = add(newWitch.inv, brew.delta);
+            auto diminishing = (newWitch.turns * 0.1) * brew.price;
+            newWitch.score += brew.price - diminishing;
             newWitch.turns++;
-            newWitch.score += brew.price;
             newWitch.brewsRemaining.reset(i);
             newWitch.action = Action{aBrew, brew.actionId, 0};
 
@@ -202,7 +203,7 @@ vector<string> bfs(
                 queue.push_back(newWitch);
                 prev.insert(make_pair(newWitch, currentWitch));
 
-                if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
+                if (newWitch.score>maxScore || (newWitch.score==maxScore && newWitch.turns<minTurns)) {
                     maxScore = newWitch.score;
                     maxWitch = newWitch;
                     minTurns = newWitch.turns;
@@ -232,7 +233,7 @@ vector<string> bfs(
                         queue.push_back(newWitch);
                         prev.insert(make_pair(newWitch, currentWitch));
 
-                        if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
+                        if (newWitch.score>maxScore || (newWitch.score==maxScore && newWitch.turns<minTurns)) {
                             maxScore = newWitch.score;
                             maxWitch = newWitch;
                             minTurns = newWitch.turns;
@@ -264,7 +265,7 @@ vector<string> bfs(
                 queue.push_back(newWitch);
                 prev.insert(make_pair(newWitch, currentWitch));
 
-                if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
+                if (newWitch.score>maxScore || (newWitch.score==maxScore && newWitch.turns<minTurns)) {
                     maxScore = newWitch.score;
                     maxWitch = newWitch;
                     minTurns = newWitch.turns;
@@ -283,7 +284,7 @@ vector<string> bfs(
                         queue.push_back(newWitch);
                         prev.insert(make_pair(newWitch, currentWitch));
 
-                        if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
+                        if (newWitch.score>maxScore || (newWitch.score==maxScore && newWitch.turns<minTurns)) {
                             maxScore = newWitch.score;
                             maxWitch = newWitch;
                             minTurns = newWitch.turns;
@@ -305,7 +306,7 @@ vector<string> bfs(
             queue.push_back(newWitch);
             prev.insert(make_pair(newWitch, currentWitch));
 
-            if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
+            if (newWitch.score>maxScore || (newWitch.score==maxScore && newWitch.turns<minTurns)) {
                 maxScore = newWitch.score;
                 maxWitch = newWitch;
                 minTurns = newWitch.turns;
@@ -366,7 +367,6 @@ void prod()
         turn ++;
         int actionCount; // the number of spells and recipes in play
         int16_t actionId; // the unique ID of this spell or recipe
-        int priciestBrewActionId;
         int maxPrice = 0;
 
         array<Cast, 64> casts;
@@ -400,7 +400,6 @@ void prod()
             cerr << actionId << " " << actionType << " " << delta0 << " " << delta1 << " " << delta2 << " " << delta3 << " " << price << " " << tomeIndex << " " << taxCount << " " << castable << " " << repeatable << endl;
             if (price > maxPrice) {
                 maxPrice = price;
-                priciestBrewActionId = actionId;
             }
             if (actionType == "CAST"){
                 struct Cast cast = {actionId, array<int16_t, 4>{delta0, delta1, delta2, delta3}, castable, repeatable};
@@ -494,7 +493,7 @@ void prod()
 
         // 3. Cast increases minimum
         int castId = -1;
-        for (int i = 0; i < casts.size(); i++) {
+        for (size_t i = 0; i < casts.size(); i++) {
             if (!casts[i]._castable) {
                 continue;
             }
