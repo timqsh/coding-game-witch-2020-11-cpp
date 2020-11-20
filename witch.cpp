@@ -139,6 +139,7 @@ vector<string> bfs(
 
     int maxScore = 0;
     int minTurns = 99999;
+    int maxTurns = 0;
     Witch maxWitch;
 
     while (tail>head){
@@ -155,6 +156,8 @@ vector<string> bfs(
         if (timeControl and (currentMs() - timeStart > 45)){     
             break;
         }
+
+        maxTurns = currentWitch.turns + 1;
 
         for (size_t i=0; i<brews.size(); i++){
             auto brew = brews[i];
@@ -299,7 +302,8 @@ vector<string> bfs(
         resultStr += " ";
         result.push_back(resultStr
             + " score:" + to_string(maxScore) 
-            + " nodes:" + to_string(tail-head));
+            + " nodes:" + to_string(tail-head)
+            + " max_turns:" + to_string(maxTurns));
         maxWitch = states[maxWitch.parentIndex];
     }
     result.push_back("Start"); // len = turns + 1
