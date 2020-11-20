@@ -417,11 +417,11 @@ void prod()
                 }
             }
         }
-        auto result = bfs(myWitch, casts, brews, learns, start, (not debug), prev, actions, queue);
 
         prev.clear();
         actions.clear();
         queue.clear();
+        auto result = bfs(myWitch, casts, brews, learns, start, (not debug), prev, actions, queue);
 
         auto elapsed = currentMs() - start;
         if (result.size()>0){
