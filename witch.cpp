@@ -145,23 +145,17 @@ vector<string> bfs(
     actions.insert(make_pair(startWitch, "Start"));
     queue.push_back(startWitch);
     int iterations = 0;
+
+    int maxScore = 0;
+    int minTurns = 99999;
+    const Witch* maxWitchPointer;
+
     while (!queue.empty() > 0){
         iterations++;
         Witch currentWitch = queue[0];
         queue.pop_front();
         if (timeControl and (currentMs() - timeStart > 33)){     
 
-            int maxScore = 0;
-            int minTurns = 99999;
-            const Witch* maxWitchPointer;
-            for (auto it=prev.begin(); it!=prev.end(); it++) {
-                auto& w = it->first;
-                if (w.score>maxScore || w.score==maxScore && w.turns<minTurns) {
-                    maxScore = w.score;
-                    maxWitchPointer = &w;
-                    minTurns = w.turns;
-                }
-            }
             Witch maxWitch = *maxWitchPointer;
             cerr << "# queue:" << queue.size() << " dict:" << prev.size() << endl;
 
@@ -201,6 +195,12 @@ vector<string> bfs(
                 prev.insert(make_pair(newWitch, currentWitch));
                 actions.insert(make_pair(newWitch, 
                     "BREW " + to_string(brew.actionId) + " +BREWING!"));
+
+                if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
+                    maxScore = newWitch.score;
+                    maxWitchPointer = &newWitch;
+                    minTurns = newWitch.turns;
+                }
             }
         }
 
@@ -227,6 +227,12 @@ vector<string> bfs(
                         prev.insert(make_pair(newWitch, currentWitch));
                         actions.insert(make_pair(newWitch, 
                             "LEARN " + to_string(learn.actionId) + " +LEARNING!"));
+
+                        if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
+                            maxScore = newWitch.score;
+                            maxWitchPointer = &newWitch;
+                            minTurns = newWitch.turns;
+                        }
                     }
                 }
             }
@@ -254,6 +260,12 @@ vector<string> bfs(
                 queue.push_back(newWitch);
                 prev.insert(make_pair(newWitch, currentWitch));
                 actions.insert(make_pair(newWitch, "CAST " + to_string(cast.actionId) + " 1 "));
+
+                if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
+                    maxScore = newWitch.score;
+                    maxWitchPointer = &newWitch;
+                    minTurns = newWitch.turns;
+                }
             }
             if (cast.repeatable){
                 int times = 1;
@@ -269,6 +281,12 @@ vector<string> bfs(
                         prev.insert(make_pair(newWitch, currentWitch));
                         actions.insert(make_pair(newWitch, 
                             "CAST " + to_string(cast.actionId) + " " + to_string(times) + " MULTICAST! "));
+
+                        if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
+                            maxScore = newWitch.score;
+                            maxWitchPointer = &newWitch;
+                            minTurns = newWitch.turns;
+                        }
                     }
                 }
             }
@@ -283,6 +301,12 @@ vector<string> bfs(
             queue.push_back(newWitch);
             prev.insert(make_pair(newWitch, currentWitch));
             actions.insert(make_pair(newWitch, "REST "));
+
+            if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
+                maxScore = newWitch.score;
+                maxWitchPointer = &newWitch;
+                minTurns = newWitch.turns;
+            }
         }
     }
     return result; // not fount -> empty
