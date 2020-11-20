@@ -13,16 +13,19 @@ api -> get timeouts
 (done) map -> unordered_map (maybe hash combine from boost)
 (done) optimise search for best path after bfs
 (done) allocate queue and dict once (to fix timeouts)
-more timer checks inside loop (to fix timeouts)
+(not needed) more timer checks inside loop (to fix timeouts)
 (done) inline struct constructors and assignment operators
+(done) 2 dicts -> 1 dict and action in witch
 move semantics / less allocations
 
 [strategy]
 (done) multicast in bfs
 (done) learn in bfs
 (not optimal) don't stop bfs on fastest brew -> return all paths -> choose by price
-(done) add brews, score, turns (and maybe learns) to state
-    -> don't stop on first brew
-sort by score - turns*1.5 + score(inv)/2. Malus to brew proportional to turns.
+(done) add brews, score, turns (and maybe learns) to state -> don't stop on first brew
+(done) diminishing 10% per turn
+(done) inventory value sum(inv[1:])
+maybe don't learn in bfs at all
+maybe learn more at start
 
 smart learn (profit estimate, blue generation)

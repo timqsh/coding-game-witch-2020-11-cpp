@@ -198,6 +198,7 @@ vector<string> bfs(
             newWitch.turns++;
             newWitch.brewsRemaining.reset(i);
             newWitch.action = Action{aBrew, brew.actionId, 0};
+            newWitch.score += newWitch.inv[1] + newWitch.inv[2] + newWitch.inv[3] - currentWitch.inv[1] - currentWitch.inv[2] - currentWitch.inv[3];
 
             if (prev.find(newWitch) == prev.end()){
                 queue.push_back(newWitch);
@@ -228,6 +229,7 @@ vector<string> bfs(
                     newWitch.inv[0] += min(learn.taxCount, freeSlots);
                     newWitch.turns++;
                     newWitch.action = Action{aLearn, learn.actionId, 0};
+                    newWitch.score += newWitch.inv[1] + newWitch.inv[2] + newWitch.inv[3] - currentWitch.inv[1] - currentWitch.inv[2] - currentWitch.inv[3];
 
                     if (prev.find(newWitch) == prev.end()){
                         queue.push_back(newWitch);
@@ -260,6 +262,7 @@ vector<string> bfs(
             newWitch.inv = add(newWitch.inv, cast.delta);
             newWitch.turns++;
             newWitch.action = Action{aCast, cast.actionId, 1};
+            newWitch.score += newWitch.inv[1] + newWitch.inv[2] + newWitch.inv[3] - currentWitch.inv[1] - currentWitch.inv[2] - currentWitch.inv[3];
 
             if (prev.find(newWitch) == prev.end()){
                 queue.push_back(newWitch);
@@ -279,6 +282,7 @@ vector<string> bfs(
                     newWitch.castableMask &= ~(1ull<<i);
                     newWitch.inv = add(newWitch.inv, cast.delta);
                     newWitch.action = Action{aCast, cast.actionId, times};
+                    newWitch.score += cast.delta[1] + cast.delta[2] + cast.delta[3];
 
                     if (prev.find(newWitch) == prev.end()){
                         queue.push_back(newWitch);
