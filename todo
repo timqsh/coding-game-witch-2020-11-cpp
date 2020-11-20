@@ -14,7 +14,7 @@ api -> get timeouts
 (done) optimise search for best path after bfs
 (done) allocate queue and dict once (to fix timeouts)
 more timer checks inside loop (to fix timeouts)
-inline struct constructors and assigment operators (return result; // not fount -> empty)
+(done) inline struct constructors and assignment operators
 move semantics / less allocations
 
 [strategy]

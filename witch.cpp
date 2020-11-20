@@ -12,7 +12,7 @@
 
 using namespace std;
 
-double currentMs() {
+inline double currentMs() {
     return chrono::duration<double>(chrono::steady_clock::now().time_since_epoch()).count() * 1000;
 }
 
@@ -40,7 +40,7 @@ struct Learn
     bool repeatable;
 };
 
-array<int16_t, 4> add(array<int16_t, 4> a, array<int16_t, 4> b)
+inline array<int16_t, 4> add(const array<int16_t, 4>& a, const array<int16_t, 4>& b)
 {
     array<int16_t, 4> res;
     for (int16_t i=0; i<4; i++){
@@ -49,7 +49,7 @@ array<int16_t, 4> add(array<int16_t, 4> a, array<int16_t, 4> b)
     return res;
 }
 
-bool can(array<int16_t, 4> inv, array<int16_t, 4> spell)
+inline bool can(const array<int16_t, 4>& inv, const array<int16_t, 4>& spell)
 {
     // 1. Enough ingredients 
     for (int16_t i =0; i<4; i++){
@@ -78,6 +78,12 @@ bool increasesMinimum(array<int16_t, 4> inv, array<int16_t, 4> cast)
 
 struct Witch
 {
+    inline Witch() = default;
+    inline Witch(Witch const&) = default;
+    inline Witch(Witch&&) = default;
+    inline Witch& operator=(Witch const&) = default;
+    inline Witch& operator=(Witch&&) = default;
+
     array<int16_t, 4> inv;
     uint64_t castsMask;
     uint64_t castableMask;
@@ -85,7 +91,7 @@ struct Witch
     int16_t turns;
     bitset<6> brewsRemaining;
 
-    bool operator==(const Witch &w) const{
+    inline bool operator==(const Witch &w) const{
         return inv==w.inv 
             && castsMask==w.castsMask 
             && castableMask==w.castableMask
@@ -95,7 +101,7 @@ struct Witch
             ;
     }
 
-    bool operator!=(const Witch &w) const{
+    inline bool operator!=(const Witch &w) const{
         return not (*this==w);
     }
 };
@@ -104,7 +110,7 @@ namespace std{
 template<>
 struct hash<Witch>
 {
-    std::size_t operator()(const Witch& w) const
+    inline std::size_t operator()(const Witch& w) const
     {
         std::size_t seed = 0;
 
@@ -122,7 +128,7 @@ struct hash<Witch>
 };
 }
 
-bool witchCanLearn(const Witch& w, const Learn& l)
+inline bool witchCanLearn(const Witch& w, const Learn& l)
 {
     auto blues = w.inv[0];
     return blues >= l.tomeIndex;
