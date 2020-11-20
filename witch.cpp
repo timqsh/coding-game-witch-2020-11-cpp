@@ -12,6 +12,8 @@
 
 using namespace std;
 
+const uint64_t MAX_UINT64 = 9223372036854775807ull;
+
 inline double currentMs() {
     return chrono::duration<double>(chrono::steady_clock::now().time_since_epoch()).count() * 1000;
 }
@@ -291,8 +293,11 @@ vector<string> bfs(
             }
         }
 
+        if (currentWitch.castableMask == MAX_UINT64) {
+            continue;
+        }
         auto newWitch = currentWitch;
-        newWitch.castableMask = 9223372036854775807ull;
+        newWitch.castableMask = MAX_UINT64;
         newWitch.turns++;
         newWitch.action = Action{aRest, 0, 0};
 
@@ -455,7 +460,7 @@ void prod()
         Witch myWitch;
         myWitch.inv = inv;
         myWitch.castsMask = 0;
-        myWitch.castableMask = 9223372036854775807ull;
+        myWitch.castableMask = MAX_UINT64;
         myWitch.score = 0;
         myWitch.turns = 0;
         myWitch.brewsRemaining.set();
