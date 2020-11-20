@@ -15,12 +15,13 @@ optimise search for best path after bfs
 more timer checks inside loop (to fix timeouts)
 move semantics / less allocations
 (done) allocate queue and dict once (to fix timeouts)
+inline struct constructors and assigment operators (return result; // not fount -> empty)
 
 [strategy]
 (done) multicast in bfs
 (done) learn in bfs
 (not optimal) don't stop bfs on fastest brew -> return all paths -> choose by price
-(done) add brews, score, turns (and maybe learns) to state 
+(done) add brews, score, turns (and maybe learns) to state
     -> don't stop on first brew
 sort by score - turns*1.5 + score(inv)/2. Malus to brew proportional to turns.
 

@@ -148,7 +148,7 @@ vector<string> bfs(
 
     int maxScore = 0;
     int minTurns = 99999;
-    const Witch* maxWitchPointer;
+    Witch maxWitch;
 
     while (!queue.empty() > 0){
         iterations++;
@@ -181,7 +181,7 @@ vector<string> bfs(
 
                 if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
                     maxScore = newWitch.score;
-                    maxWitchPointer = &newWitch;
+                    maxWitch = newWitch;
                     minTurns = newWitch.turns;
                 }
             }
@@ -213,7 +213,7 @@ vector<string> bfs(
 
                         if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
                             maxScore = newWitch.score;
-                            maxWitchPointer = &newWitch;
+                            maxWitch = newWitch;
                             minTurns = newWitch.turns;
                         }
                     }
@@ -246,7 +246,7 @@ vector<string> bfs(
 
                 if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
                     maxScore = newWitch.score;
-                    maxWitchPointer = &newWitch;
+                    maxWitch = newWitch;
                     minTurns = newWitch.turns;
                 }
             }
@@ -267,7 +267,7 @@ vector<string> bfs(
 
                         if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
                             maxScore = newWitch.score;
-                            maxWitchPointer = &newWitch;
+                            maxWitch = newWitch;
                             minTurns = newWitch.turns;
                         }
                     }
@@ -287,12 +287,11 @@ vector<string> bfs(
 
             if (newWitch.score>maxScore || newWitch.score==maxScore && newWitch.turns<minTurns) {
                 maxScore = newWitch.score;
-                maxWitchPointer = &newWitch;
+                maxWitch = newWitch;
                 minTurns = newWitch.turns;
             }
         }
     }
-    Witch maxWitch = *maxWitchPointer;
     cerr << "# queue:" << queue.size() << " dict:" << prev.size() << endl;
     if (maxScore <= 0) {
         return result; // not fount -> empty
