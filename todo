@@ -25,7 +25,8 @@ move semantics / less allocations
 (done) add brews, score, turns (and maybe learns) to state -> don't stop on first brew
 (done) diminishing 10% per turn
 (done) inventory value sum(inv[1:])
-maybe don't learn in bfs at all
-maybe learn more at start
+(worse) maybe don't learn in bfs at all
+(worse) maybe learn more at start
+maybe learn less at start
 
 smart learn (profit estimate, blue generation)
