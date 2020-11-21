@@ -212,38 +212,38 @@ vector<string> bfs(
             }
         }
 
-        if (iterations==1){
-            int learnsCount = 0;
-            for(auto learn:learns){
-                if (witchCanLearn(currentWitch, learn)){
-                    learnsCount ++;
-                    int castsLearnIndex = 63 - learnsCount;
+        // if (iterations==1){
+        //     int learnsCount = 0;
+        //     for(auto learn:learns){
+        //         if (witchCanLearn(currentWitch, learn)){
+        //             learnsCount ++;
+        //             int castsLearnIndex = 63 - learnsCount;
                     
-                    auto newWitch = currentWitch;
-                    casts[castsLearnIndex].actionId = 256-learnsCount;
-                    casts[castsLearnIndex].delta = learn.delta;
-                    casts[castsLearnIndex].repeatable = learn.repeatable;
-                    newWitch.castsMask |= (1ull<<castsLearnIndex);
-                    newWitch.inv[0] -= learn.tomeIndex;
-                    auto freeSlots = 10 - newWitch.inv[0]-newWitch.inv[1]-newWitch.inv[2]-newWitch.inv[3];
-                    newWitch.inv[0] += min(learn.taxCount, freeSlots);
-                    newWitch.turns++;
-                    newWitch.action = Action{aLearn, learn.actionId, 0};
-                    newWitch.score += newWitch.inv[1] + newWitch.inv[2] + newWitch.inv[3] - currentWitch.inv[1] - currentWitch.inv[2] - currentWitch.inv[3];
+        //             auto newWitch = currentWitch;
+        //             casts[castsLearnIndex].actionId = 256-learnsCount;
+        //             casts[castsLearnIndex].delta = learn.delta;
+        //             casts[castsLearnIndex].repeatable = learn.repeatable;
+        //             newWitch.castsMask |= (1ull<<castsLearnIndex);
+        //             newWitch.inv[0] -= learn.tomeIndex;
+        //             auto freeSlots = 10 - newWitch.inv[0]-newWitch.inv[1]-newWitch.inv[2]-newWitch.inv[3];
+        //             newWitch.inv[0] += min(learn.taxCount, freeSlots);
+        //             newWitch.turns++;
+        //             newWitch.action = Action{aLearn, learn.actionId, 0};
+        //             newWitch.score += newWitch.inv[1] + newWitch.inv[2] + newWitch.inv[3] - currentWitch.inv[1] - currentWitch.inv[2] - currentWitch.inv[3];
 
-                    if (prev.find(newWitch) == prev.end()){
-                        queue.push_back(newWitch);
-                        prev.insert(make_pair(newWitch, currentWitch));
+        //             if (prev.find(newWitch) == prev.end()){
+        //                 queue.push_back(newWitch);
+        //                 prev.insert(make_pair(newWitch, currentWitch));
 
-                        if (newWitch.score>maxScore || (newWitch.score==maxScore && newWitch.turns<minTurns)) {
-                            maxScore = newWitch.score;
-                            maxWitch = newWitch;
-                            minTurns = newWitch.turns;
-                        }
-                    }
-                }
-            }
-        }
+        //                 if (newWitch.score>maxScore || (newWitch.score==maxScore && newWitch.turns<minTurns)) {
+        //                     maxScore = newWitch.score;
+        //                     maxWitch = newWitch;
+        //                     minTurns = newWitch.turns;
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
         for (int i=0; i<64; i++){
             if (!(currentWitch.castsMask & (1ull<<i))) {
