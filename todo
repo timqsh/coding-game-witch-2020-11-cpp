@@ -27,6 +27,6 @@ move semantics / less allocations
 (done) inventory value sum(inv[1:])
 (worse) maybe don't learn in bfs at all
 (worse) maybe learn more at start
-maybe learn less at start
+(worse) maybe learn less at start
 
 smart learn (profit estimate, blue generation)
