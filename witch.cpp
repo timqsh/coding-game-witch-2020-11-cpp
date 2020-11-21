@@ -159,13 +159,18 @@ vector<string> bfs(
     vector<Learn> learns,
     double timeStart,
     bool timeControl,
-    unordered_map<Witch, Witch>& prev,
-    deque<Witch>& queue
+    unordered_map<Witch, int>& prev,
+    vector<Witch>& queue
 )
 {
     vector<string> result;
-    prev.insert(make_pair(startWitch, startWitch));
-    queue.push_back(startWitch);
+    prev.insert(make_pair(startWitch, -1));
+
+    int head = 0;
+    int tail = 0;
+    queue[tail] = startWitch;
+    tail++;
+
     int iterations = 0;
 
     double maxScore = 0;
@@ -173,10 +178,13 @@ vector<string> bfs(
     int maxTurns = 0;
     Witch maxWitch;
 
-    while (!queue.empty() > 0){
+    while (tail > head){
         iterations++;
-        Witch currentWitch = queue[0];
-        queue.pop_front();
+
+        int currenIndex = head;
+        Witch currentWitch = queue[head];
+        head++;
+
         if (timeControl and (currentMs() - timeStart > 45)){     
             break;
         }
@@ -191,7 +199,8 @@ vector<string> bfs(
                 continue;
             }
 
-            auto newWitch = currentWitch;
+            queue[tail] = currentWitch;
+            auto& newWitch = queue[tail];
             newWitch.inv = add(newWitch.inv, brew.delta);
             auto diminishing = (newWitch.turns * 0.1) * brew.price;
             newWitch.score += brew.price - diminishing;
@@ -201,8 +210,8 @@ vector<string> bfs(
             newWitch.score += newWitch.inv[1] + newWitch.inv[2] + newWitch.inv[3] - currentWitch.inv[1] - currentWitch.inv[2] - currentWitch.inv[3];
 
             if (prev.find(newWitch) == prev.end()){
-                queue.push_back(newWitch);
-                prev.insert(make_pair(newWitch, currentWitch));
+                tail++;
+                prev.insert(make_pair(newWitch, currenIndex));
 
                 if (newWitch.score>maxScore || (newWitch.score==maxScore && newWitch.turns<minTurns)) {
                     maxScore = newWitch.score;
@@ -219,7 +228,8 @@ vector<string> bfs(
                     learnsCount ++;
                     int castsLearnIndex = 63 - learnsCount;
                     
-                    auto newWitch = currentWitch;
+                    queue[tail] = currentWitch;
+                    auto& newWitch = queue[tail];
                     casts[castsLearnIndex].actionId = 256-learnsCount;
                     casts[castsLearnIndex].delta = learn.delta;
                     casts[castsLearnIndex].repeatable = learn.repeatable;
@@ -232,8 +242,8 @@ vector<string> bfs(
                     newWitch.score += newWitch.inv[1] + newWitch.inv[2] + newWitch.inv[3] - currentWitch.inv[1] - currentWitch.inv[2] - currentWitch.inv[3];
 
                     if (prev.find(newWitch) == prev.end()){
-                        queue.push_back(newWitch);
-                        prev.insert(make_pair(newWitch, currentWitch));
+                        tail++;
+                        prev.insert(make_pair(newWitch, currenIndex));
 
                         if (newWitch.score>maxScore || (newWitch.score==maxScore && newWitch.turns<minTurns)) {
                             maxScore = newWitch.score;
@@ -257,7 +267,8 @@ vector<string> bfs(
                 continue;
             }
 
-            auto newWitch = currentWitch;
+            queue[tail] = currentWitch;
+            auto& newWitch = queue[tail];
             newWitch.castableMask &= ~(1ull<<i);
             newWitch.inv = add(newWitch.inv, cast.delta);
             newWitch.turns++;
@@ -265,8 +276,8 @@ vector<string> bfs(
             newWitch.score += newWitch.inv[1] + newWitch.inv[2] + newWitch.inv[3] - currentWitch.inv[1] - currentWitch.inv[2] - currentWitch.inv[3];
 
             if (prev.find(newWitch) == prev.end()){
-                queue.push_back(newWitch);
-                prev.insert(make_pair(newWitch, currentWitch));
+                tail++;
+                prev.insert(make_pair(newWitch, currenIndex));
 
                 if (newWitch.score>maxScore || (newWitch.score==maxScore && newWitch.turns<minTurns)) {
                     maxScore = newWitch.score;
@@ -276,6 +287,7 @@ vector<string> bfs(
             }
             if (cast.repeatable){
                 int16_t times = 1;
+                Witch newWitch = newWitch;
                 while (can(newWitch.inv, cast.delta)){
                     times++;
 
@@ -285,8 +297,9 @@ vector<string> bfs(
                     newWitch.score += cast.delta[1] + cast.delta[2] + cast.delta[3];
 
                     if (prev.find(newWitch) == prev.end()){
-                        queue.push_back(newWitch);
-                        prev.insert(make_pair(newWitch, currentWitch));
+                        queue[tail] = newWitch;
+                        tail++;
+                        prev.insert(make_pair(newWitch, currenIndex));
 
                         if (newWitch.score>maxScore || (newWitch.score==maxScore && newWitch.turns<minTurns)) {
                             maxScore = newWitch.score;
@@ -301,14 +314,15 @@ vector<string> bfs(
         if (currentWitch.castableMask == MAX_UINT64) {
             continue;
         }
-        auto newWitch = currentWitch;
+        queue[tail] = currentWitch;
+        auto& newWitch = queue[tail];
         newWitch.castableMask = MAX_UINT64;
         newWitch.turns++;
         newWitch.action = Action{aRest, 0, 0};
 
         if (prev.find(newWitch) == prev.end()){
-            queue.push_back(newWitch);
-            prev.insert(make_pair(newWitch, currentWitch));
+            tail++;
+            prev.insert(make_pair(newWitch, currenIndex));
 
             if (newWitch.score>maxScore || (newWitch.score==maxScore && newWitch.turns<minTurns)) {
                 maxScore = newWitch.score;
@@ -317,7 +331,7 @@ vector<string> bfs(
             }
         }
     }
-    cerr << "# queue:" << queue.size() << " dict:" << prev.size() << endl;
+    cerr << "# queue:" << tail-head << " dict:" << prev.size() << endl;
     if (maxScore <= 0) {
         return result; // not fount -> empty
     }
@@ -343,7 +357,7 @@ vector<string> bfs(
         if (it == prev.end()){
             throw runtime_error("key in prev not found");
         }
-        maxWitch = it->second;
+        maxWitch = queue[it->second];
     }
     result.push_back("Start"); // len = turns + 1
     return result;
@@ -361,8 +375,8 @@ void prod()
         cerr << "DEBUG=true" << endl;
     }
 
-    unordered_map<Witch, Witch> prev;
-    deque<Witch> queue;
+    unordered_map<Witch, int> prev;
+    vector<Witch> queue(200000);
 
     // game loop
     int turn = 0;
@@ -435,7 +449,7 @@ void prod()
 
         // 0. Learn
         if ((castsSize < 12) and (not debug)){
-            Learn first_tome;
+            Learn first_tome{};
             for(auto elem: learns){
                 if (elem.tomeIndex==0){
                     first_tome = elem;
