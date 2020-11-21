@@ -12,7 +12,7 @@
 
 using namespace std;
 
-const uint64_t MAX_UINT64 = 9223372036854775807ull;
+const size_t MAX_CASTS = 16;
 
 inline double currentMs() {
     return chrono::duration<double>(chrono::steady_clock::now().time_since_epoch()).count() * 1000;
@@ -102,8 +102,8 @@ struct Witch
     inline Witch& operator=(Witch&&) = default;
 
     array<int16_t, 4> inv;
-    uint64_t castsMask;
-    uint64_t castableMask;
+    bitset<MAX_CASTS> castsMask;
+    bitset<MAX_CASTS> castableMask;
     double score;
     int16_t turns;
     bitset<6> brewsRemaining;
@@ -135,10 +135,10 @@ struct hash<Witch>
         for (auto e: w.inv) {
             seed ^= hash<int>{}(e) + 0x9e3779b9 + (seed<<6) + (seed>>2);
         }
-        seed ^= hash<uint64_t>{}(w.castsMask) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-        seed ^= hash<uint64_t>{}(w.castableMask) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-        seed ^= hash<uint64_t>{}(w.score) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-        // seed ^= hash<uint64_t>{}(w.turns) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+        seed ^= hash<bitset<MAX_CASTS>>{}(w.castsMask) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+        seed ^= hash<bitset<MAX_CASTS>>{}(w.castableMask) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+        seed ^= hash<double>{}(w.score) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+        // seed ^= hash<uint16_t>{}(w.turns) + 0x9e3779b9 + (seed<<6) + (seed>>2);
         seed ^= hash<bitset<6>>{}(w.brewsRemaining) + 0x9e3779b9 + (seed<<6) + (seed>>2);
 
         return seed;
@@ -154,7 +154,7 @@ inline bool witchCanLearn(const Witch& w, const Learn& l)
 
 vector<string> bfs(
     Witch startWitch,
-    array<Cast, 64> casts,
+    array<Cast, MAX_CASTS> casts,
     vector<Brew> brews,
     vector<Learn> learns,
     double timeStart,
@@ -226,14 +226,14 @@ vector<string> bfs(
             for(auto learn:learns){
                 if (witchCanLearn(currentWitch, learn)){
                     learnsCount ++;
-                    int castsLearnIndex = 63 - learnsCount;
+                    int castsLearnIndex = MAX_CASTS - learnsCount;
                     
                     queue[tail] = currentWitch;
                     auto& newWitch = queue[tail];
-                    casts[castsLearnIndex].actionId = 256-learnsCount;
+                    casts[castsLearnIndex].actionId = MAX_CASTS-learnsCount;
                     casts[castsLearnIndex].delta = learn.delta;
                     casts[castsLearnIndex].repeatable = learn.repeatable;
-                    newWitch.castsMask |= (1ull<<castsLearnIndex);
+                    newWitch.castsMask.set(castsLearnIndex);
                     newWitch.inv[0] -= learn.tomeIndex;
                     auto freeSlots = 10 - newWitch.inv[0]-newWitch.inv[1]-newWitch.inv[2]-newWitch.inv[3];
                     newWitch.inv[0] += min(learn.taxCount, freeSlots);
@@ -255,11 +255,11 @@ vector<string> bfs(
             }
         }
 
-        for (int i=0; i<64; i++){
-            if (!(currentWitch.castsMask & (1ull<<i))) {
+        for (size_t i=0; i<MAX_CASTS; i++){
+            if (!(currentWitch.castsMask.test(i))) {
                 continue;
             }
-            if (!(currentWitch.castableMask & (1ull<<i))){
+            if (!(currentWitch.castableMask.test(i))){
                 continue;
             }
             auto cast = casts[i];
@@ -269,7 +269,7 @@ vector<string> bfs(
 
             queue[tail] = currentWitch;
             auto& newWitch = queue[tail];
-            newWitch.castableMask &= ~(1ull<<i);
+            newWitch.castableMask.reset(i);
             newWitch.inv = add(newWitch.inv, cast.delta);
             newWitch.turns++;
             newWitch.action = Action{aCast, cast.actionId, 1};
@@ -291,7 +291,7 @@ vector<string> bfs(
                 while (can(newWitch.inv, cast.delta)){
                     times++;
 
-                    newWitch.castableMask &= ~(1ull<<i);
+                    newWitch.castableMask.reset(i);
                     newWitch.inv = add(newWitch.inv, cast.delta);
                     newWitch.action = Action{aCast, cast.actionId, times};
                     newWitch.score += cast.delta[1] + cast.delta[2] + cast.delta[3];
@@ -311,12 +311,12 @@ vector<string> bfs(
             }
         }
 
-        if (currentWitch.castableMask == MAX_UINT64) {
+        if (currentWitch.castableMask.all()) {
             continue;
         }
         queue[tail] = currentWitch;
         auto& newWitch = queue[tail];
-        newWitch.castableMask = MAX_UINT64;
+        newWitch.castableMask.set();
         newWitch.turns++;
         newWitch.action = Action{aRest, 0, 0};
 
@@ -387,9 +387,9 @@ void prod()
         int16_t actionId; // the unique ID of this spell or recipe
         int maxPrice = 0;
 
-        array<Cast, 64> casts;
+        array<Cast, MAX_CASTS> casts;
         int castsSize = 0;
-        for (int i=0; i<64; i++) {
+        for (size_t i=0; i<MAX_CASTS; i++) {
             casts[i].actionId = -1;
             casts[i]._castable = false;
             casts[i].delta = {0,0,0,0};
@@ -476,16 +476,16 @@ void prod()
         // 2. BFS
         Witch myWitch;
         myWitch.inv = inv;
-        myWitch.castsMask = 0;
-        myWitch.castableMask = MAX_UINT64;
+        myWitch.castsMask.reset();
+        myWitch.castableMask.set();
         myWitch.score = 0;
         myWitch.turns = 0;
         myWitch.brewsRemaining.set();
-        for (int i=0; i<64; i++) {
+        for (size_t i=0; i<MAX_CASTS; i++) {
             if (casts[i].actionId > -1) {
-                myWitch.castsMask |= (1ull<<i);
+                myWitch.castsMask.set(i);
                 if (not casts[i]._castable) {
-                    myWitch.castableMask &= ~(1ull<<i);
+                    myWitch.castableMask.reset(i);
                 }
             }
         }
